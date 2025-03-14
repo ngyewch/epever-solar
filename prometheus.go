@@ -37,14 +37,19 @@ type PrometheusCollectorHelper struct {
 	chargingEquipmentStatus *prometheus.Desc
 
 	// statistics
-	maxInputVoltageToday    *prometheus.Desc
-	minInputVoltageToday    *prometheus.Desc
-	maxBatteryVoltageToday  *prometheus.Desc
-	minBatteryVoltageToday  *prometheus.Desc
-	consumedEnergyToday     *prometheus.Desc
-	consumedEnergyThisMonth *prometheus.Desc
-	consumedEnergyThisYear  *prometheus.Desc
-	totalConsumedEnergy     *prometheus.Desc
+	maxInputVoltageToday     *prometheus.Desc
+	minInputVoltageToday     *prometheus.Desc
+	maxBatteryVoltageToday   *prometheus.Desc
+	minBatteryVoltageToday   *prometheus.Desc
+	consumedEnergyToday      *prometheus.Desc
+	consumedEnergyThisMonth  *prometheus.Desc
+	consumedEnergyThisYear   *prometheus.Desc
+	totalConsumedEnergy      *prometheus.Desc
+	generatedEnergyToday     *prometheus.Desc
+	generatedEnergyThisMonth *prometheus.Desc
+	generatedEnergyThisYear  *prometheus.Desc
+	totalGeneratedEnergy     *prometheus.Desc
+	carbonDioxideReduction   *prometheus.Desc
 }
 
 func NewPrometheusCollectorHelper(variableLabels []string, constLabels prometheus.Labels) *PrometheusCollectorHelper {
@@ -180,6 +185,26 @@ func NewPrometheusCollectorHelper(variableLabels []string, constLabels prometheu
 			"epsolar_total_consumed_energy",
 			"Total consumed energy (kWh)",
 			variableLabels, constLabels),
+		generatedEnergyToday: prometheus.NewDesc(
+			"epsolar_generated_energy_today",
+			"Generated energy today (kWh)",
+			variableLabels, constLabels),
+		generatedEnergyThisMonth: prometheus.NewDesc(
+			"epsolar_generated_energy_this_month",
+			"Generated energy this month (kWh)",
+			variableLabels, constLabels),
+		generatedEnergyThisYear: prometheus.NewDesc(
+			"epsolar_generated_energy_this_year",
+			"Generated energy this year (kWh)",
+			variableLabels, constLabels),
+		totalGeneratedEnergy: prometheus.NewDesc(
+			"epsolar_total_generated_energy",
+			"Total generated energy (kWh)",
+			variableLabels, constLabels),
+		carbonDioxideReduction: prometheus.NewDesc(
+			"epsolar_carbon_dioxide_reduction",
+			"Carbon dioxide reduction (ton)",
+			variableLabels, constLabels),
 	}
 }
 
@@ -219,6 +244,11 @@ func (c *PrometheusCollectorHelper) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.consumedEnergyThisMonth
 	ch <- c.consumedEnergyThisYear
 	ch <- c.totalConsumedEnergy
+	ch <- c.generatedEnergyToday
+	ch <- c.generatedEnergyThisMonth
+	ch <- c.generatedEnergyThisYear
+	ch <- c.totalGeneratedEnergy
+	ch <- c.carbonDioxideReduction
 }
 
 func (c *PrometheusCollectorHelper) Collect(dev *Dev, ch chan<- prometheus.Metric, labelValues ...string) {
@@ -294,6 +324,36 @@ func (c *PrometheusCollectorHelper) Collect(dev *Dev, ch chan<- prometheus.Metri
 			}()
 			ch <- prometheus.MustNewConstMetric(c.batteryStatus, prometheus.GaugeValue, float64(realTimeStatus.BatteryStatus), labelValues...)
 			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentStatus, prometheus.GaugeValue, float64(realTimeStatus.ChargingEquipmentStatus), labelValues...)
+		}()
+	}
+
+	statistics, err := dev.ReadStatistics()
+	if err != nil {
+		slog.Warn("failed to read statistics",
+			slog.Any("error", err),
+		)
+	} else {
+		func() {
+			defer func() {
+				if err := recover(); err != nil {
+					slog.Error("failed to create metric",
+						slog.Any("error", err),
+					)
+				}
+			}()
+			ch <- prometheus.MustNewConstMetric(c.maxInputVoltageToday, prometheus.GaugeValue, statistics.MaximumInputVoltageToday, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.minInputVoltageToday, prometheus.GaugeValue, statistics.MinimumInputVoltageToday, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.maxBatteryVoltageToday, prometheus.GaugeValue, statistics.MaximumBatteryVoltageToday, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.minBatteryVoltageToday, prometheus.GaugeValue, statistics.MinimumBatteryVoltageToday, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.consumedEnergyToday, prometheus.GaugeValue, statistics.ConsumedEnergyToday, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.consumedEnergyThisMonth, prometheus.GaugeValue, statistics.ConsumedEnergyThisMonth, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.consumedEnergyThisYear, prometheus.GaugeValue, statistics.ConsumedEnergyThisYear, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.totalConsumedEnergy, prometheus.GaugeValue, statistics.TotalConsumedEnergy, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.generatedEnergyToday, prometheus.GaugeValue, statistics.GeneratedEnergyToday, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.generatedEnergyThisMonth, prometheus.GaugeValue, statistics.GeneratedEnergyThisMonth, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.generatedEnergyThisYear, prometheus.GaugeValue, statistics.GeneratedEnergyThisYear, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.totalGeneratedEnergy, prometheus.GaugeValue, statistics.TotalGeneratedEnergy, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.carbonDioxideReduction, prometheus.GaugeValue, statistics.CarbonDioxideReduction, labelValues...)
 		}()
 	}
 }
