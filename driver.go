@@ -66,23 +66,23 @@ func (dev *Dev) ReadParameters() (Parameters, error) {
 	if err != nil {
 		return Parameters{}, err
 	}
-	regs9000, err := dev.mc.ReadRegisters(0x9000, 15, modbus.INPUT_REGISTER)
+	regs9000, err := dev.mc.ReadRegisters(0x9000, 15, modbus.HOLDING_REGISTER)
 	if err != nil {
 		return Parameters{}, err
 	}
-	regs9067, err := dev.mc.ReadRegisters(0x9067, 1, modbus.INPUT_REGISTER)
+	regs9067, err := dev.mc.ReadRegisters(0x9067, 1, modbus.HOLDING_REGISTER)
 	if err != nil {
 		return Parameters{}, err
 	}
-	regs906a, err := dev.mc.ReadRegisters(0x906a, 5, modbus.INPUT_REGISTER)
+	regs906a, err := dev.mc.ReadRegisters(0x906a, 5, modbus.HOLDING_REGISTER)
 	if err != nil {
 		return Parameters{}, err
 	}
-	regs9070, err := dev.mc.ReadRegisters(0x9070, 1, modbus.INPUT_REGISTER)
+	regs9070, err := dev.mc.ReadRegisters(0x9070, 1, modbus.HOLDING_REGISTER)
 	if err != nil {
 		return Parameters{}, err
 	}
-	regs9107, err := dev.mc.ReadRegisters(0x9107, 1, modbus.INPUT_REGISTER)
+	regs9107, err := dev.mc.ReadRegisters(0x9107, 1, modbus.HOLDING_REGISTER)
 	if err != nil {
 		return Parameters{}, err
 	}
