@@ -6,11 +6,6 @@ import (
 )
 
 type PrometheusCollectorHelper struct {
-	// rated data
-	ratedChargingCurrent    *prometheus.Desc
-	ratedLoadCurrent        *prometheus.Desc
-	batteryRealRatedVoltage *prometheus.Desc
-
 	// real-time data
 	pvArrayInputVoltage *prometheus.Desc
 	pvArrayInputCurrent *prometheus.Desc
@@ -46,19 +41,6 @@ type PrometheusCollectorHelper struct {
 
 func NewPrometheusCollectorHelper(variableLabels []string, constLabels prometheus.Labels) *PrometheusCollectorHelper {
 	return &PrometheusCollectorHelper{
-		ratedChargingCurrent: prometheus.NewDesc(
-			"epever_solar_rated_charging_current",
-			"Rated chargine current (A)",
-			variableLabels, constLabels),
-		ratedLoadCurrent: prometheus.NewDesc(
-			"epever_solar_rated_load_current",
-			"Rated load current (A)",
-			variableLabels, constLabels),
-		batteryRealRatedVoltage: prometheus.NewDesc(
-			"epever_solar_battery_real_rated_voltage",
-			"Battery real rated voltage (V)",
-			variableLabels, constLabels),
-
 		pvArrayInputVoltage: prometheus.NewDesc(
 			"epever_solar_pv_array_input_voltage",
 			"PV array input voltage (V)",
@@ -169,10 +151,6 @@ func NewPrometheusCollectorHelper(variableLabels []string, constLabels prometheu
 }
 
 func (c *PrometheusCollectorHelper) Describe(ch chan<- *prometheus.Desc) {
-	ch <- c.ratedChargingCurrent
-	ch <- c.ratedLoadCurrent
-	ch <- c.batteryRealRatedVoltage
-
 	ch <- c.pvArrayInputVoltage
 	ch <- c.pvArrayInputCurrent
 	ch <- c.pvArrayInputPower
@@ -204,26 +182,6 @@ func (c *PrometheusCollectorHelper) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *PrometheusCollectorHelper) Collect(dev *Dev, ch chan<- prometheus.Metric, labelValues ...string) {
-	ratedData, err := dev.ReadRatedData()
-	if err != nil {
-		slog.Warn("failed to read rated data",
-			slog.Any("error", err),
-		)
-	} else {
-		func() {
-			defer func() {
-				if err := recover(); err != nil {
-					slog.Error("failed to create metric",
-						slog.Any("error", err),
-					)
-				}
-			}()
-			ch <- prometheus.MustNewConstMetric(c.ratedChargingCurrent, prometheus.GaugeValue, ratedData.RatedChargingCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.ratedLoadCurrent, prometheus.GaugeValue, ratedData.RatedLoadCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.batteryRealRatedVoltage, prometheus.GaugeValue, ratedData.BatteryRealRatedVoltage, labelValues...)
-		}()
-	}
-
 	realTimeData, err := dev.ReadRealTimeData()
 	if err != nil {
 		slog.Warn("failed to read real-time data",
