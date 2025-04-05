@@ -58,6 +58,61 @@ func (dev *Dev) ReadRatedData() (RatedData, error) {
 	}, nil
 }
 
+func (dev *Dev) ReadParameters() (Parameters, error) {
+	dev.mutex.Lock()
+	defer dev.mutex.Unlock()
+
+	err := dev.requestSetup()
+	if err != nil {
+		return Parameters{}, err
+	}
+	regs9000, err := dev.mc.ReadRegisters(0x9000, 15, modbus.INPUT_REGISTER)
+	if err != nil {
+		return Parameters{}, err
+	}
+	regs9067, err := dev.mc.ReadRegisters(0x9067, 1, modbus.INPUT_REGISTER)
+	if err != nil {
+		return Parameters{}, err
+	}
+	regs906a, err := dev.mc.ReadRegisters(0x906a, 5, modbus.INPUT_REGISTER)
+	if err != nil {
+		return Parameters{}, err
+	}
+	regs9070, err := dev.mc.ReadRegisters(0x9070, 1, modbus.INPUT_REGISTER)
+	if err != nil {
+		return Parameters{}, err
+	}
+	regs9107, err := dev.mc.ReadRegisters(0x9107, 1, modbus.INPUT_REGISTER)
+	if err != nil {
+		return Parameters{}, err
+	}
+	return Parameters{
+		BatteryType:                                    BatteryType(regs9000[0x00]),                                    // 0x9000
+		BatteryCapacity:                                convert16BitRegister(regs9000[0x01], 1),                        // 0x9001
+		TemperatureCompensationCoefficient:             convert16BitRegister(regs9000[0x02], 100),                      // 0x9002
+		OverVoltageDisconnectVoltage:                   convert16BitRegister(regs9000[0x03], 100),                      // 0x9003
+		ChargingLimitVoltage:                           convert16BitRegister(regs9000[0x04], 100),                      // 0x9004
+		OverVoltageReconnectVoltage:                    convert16BitRegister(regs9000[0x05], 100),                      // 0x9005
+		EqualizeChargingVoltage:                        convert16BitRegister(regs9000[0x06], 100),                      // 0x9006
+		BoostChargingVoltage:                           convert16BitRegister(regs9000[0x07], 100),                      // 0x9007
+		FloatChargingVoltage:                           convert16BitRegister(regs9000[0x08], 100),                      // 0x9008
+		BoostReconnectChargingVoltage:                  convert16BitRegister(regs9000[0x09], 100),                      // 0x9009
+		LowVoltageReconnectVoltage:                     convert16BitRegister(regs9000[0x0A], 100),                      // 0x900a
+		UnderVoltageWarningRecoverVoltage:              convert16BitRegister(regs9000[0x0B], 100),                      // 0x900b
+		UnderVoltageWarningVoltage:                     convert16BitRegister(regs9000[0x0C], 100),                      // 0x900c
+		LowVoltageDisconnectVoltage:                    convert16BitRegister(regs9000[0x0D], 100),                      // 0x900d
+		DischargingLimitVoltage:                        convert16BitRegister(regs9000[0x0E], 100),                      // 0x900e
+		BatteryRatedVoltageLevel:                       BatteryRatedVoltageLevel(regs9067[0x00]),                       // 0x9067
+		DefaultLoadOnOffInManualMode:                   regs906a[0x00],                                                 // 0x906a
+		EqualizeDuration:                               regs906a[0x01],                                                 // 0x906b
+		BoostDuration:                                  regs906a[0x02],                                                 // 0x906c
+		BatteryDischarge:                               convert16BitRegister(regs906a[0x03], 100),                      // 0x906d
+		BatteryCharge:                                  convert16BitRegister(regs906a[0x04], 100),                      // 0x906e
+		ChargingMode:                                   ChargingMode(regs9070[0x00]),                                   // 0x9070
+		LiBatteryProtectionAndOverTemperatureDropPower: LiBatteryProtectionAndOverTemperatureDropPower(regs9107[0x00]), // 0x9107
+	}, nil
+}
+
 func (dev *Dev) ReadRealTimeData() (RealTimeData, error) {
 	dev.mutex.Lock()
 	defer dev.mutex.Unlock()

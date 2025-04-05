@@ -58,6 +58,25 @@ func doEpsolarRatedData(cCtx *cli.Context) error {
 	return nil
 }
 
+func doEpsolarParameters(cCtx *cli.Context) error {
+	e, err := newEpsolar(cCtx)
+	if err != nil {
+		return err
+	}
+
+	parameters, err := e.ReadParameters()
+	if err != nil {
+		return err
+	}
+
+	err = printJSON(parameters)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func doEpsolarRealTimeData(cCtx *cli.Context) error {
 	e, err := newEpsolar(cCtx)
 	if err != nil {
