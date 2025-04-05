@@ -6,8 +6,9 @@ import (
 )
 
 type RealTimeStatus struct {
-	BatteryStatus           BatteryStatus
-	ChargingEquipmentStatus ChargingEquipmentStatus
+	BatteryStatus              BatteryStatus
+	ChargingEquipmentStatus    ChargingEquipmentStatus
+	DischargingEquipmentStatus DischargingEquipmentStatus
 }
 
 // ----
@@ -36,9 +37,9 @@ type VoltageStatus uint8
 
 const (
 	VoltageStatusNormal VoltageStatus = iota
-	VoltageStatusOverVolt
-	VoltageStatusUnderVolt
-	VoltageStatusLowVoltDisconnect
+	VoltageStatusOverVoltage
+	VoltageStatusUnderVoltage
+	VoltageStatusOverDischarge
 	VoltageStatusFault
 )
 
@@ -46,12 +47,12 @@ func (vs VoltageStatus) String() string {
 	switch vs {
 	case VoltageStatusNormal:
 		return "Normal"
-	case VoltageStatusOverVolt:
-		return "Over Volt"
-	case VoltageStatusUnderVolt:
-		return "Under Volt"
-	case VoltageStatusLowVoltDisconnect:
-		return "Low Volt Disconnect"
+	case VoltageStatusOverVoltage:
+		return "Over Voltage"
+	case VoltageStatusUnderVoltage:
+		return "Under Voltage"
+	case VoltageStatusOverDischarge:
+		return "Over Discharge"
 	case VoltageStatusFault:
 		return "Fault"
 	default:
@@ -162,21 +163,21 @@ type InputVoltageStatus uint8
 
 const (
 	InputVoltageStatusNormal InputVoltageStatus = iota
-	InputVoltageStatusNoPowerConnected
-	InputVoltageStatusHigherVoltInput
-	InputVoltageStatusInputVoltError
+	InputVoltageStatusNoInputPowerConnected
+	InputVoltageStatusHigherInputVoltage
+	InputVoltageStatusInputVoltageError
 )
 
 func (ivs InputVoltageStatus) String() string {
 	switch ivs {
 	case InputVoltageStatusNormal:
 		return "Normal"
-	case InputVoltageStatusNoPowerConnected:
-		return "No Power Connected"
-	case InputVoltageStatusHigherVoltInput:
-		return "Higher Volt Input"
-	case InputVoltageStatusInputVoltError:
-		return "Input Volt Error"
+	case InputVoltageStatusNoInputPowerConnected:
+		return "No Input Power Connected"
+	case InputVoltageStatusHigherInputVoltage:
+		return "Higher Input Voltage"
+	case InputVoltageStatusInputVoltageError:
+		return "Input Voltage Error"
 	default:
 		return fmt.Sprintf("%02x", uint8(ivs))
 	}
@@ -184,4 +185,100 @@ func (ivs InputVoltageStatus) String() string {
 
 func (ivs InputVoltageStatus) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ivs.String())
+}
+
+// ----
+
+type DischargingEquipmentStatus uint16
+
+type DischargingEquipmentStatusDetails struct {
+	Running                       bool
+	Fault                         bool
+	OutputOverVoltage             bool
+	BoostOverVoltage              bool
+	ShortCircuitInHighVoltageSide bool
+	InputOverVoltage              bool
+	OutputVoltageAbnormal         bool
+	UnableToStopDischarging       bool
+	UnableToDischarge             bool
+	ShortCircuit                  bool
+	OutputPowerStatus             OutputPowerStatus
+	InputVoltageStatus            DischargingEquipmentInputVoltageStatus
+}
+
+func (des DischargingEquipmentStatus) Details() DischargingEquipmentStatusDetails {
+	return DischargingEquipmentStatusDetails{
+		Running:                       checkBit(uint16(des), 0),
+		Fault:                         checkBit(uint16(des), 1),
+		OutputOverVoltage:             checkBit(uint16(des), 4),
+		BoostOverVoltage:              checkBit(uint16(des), 5),
+		ShortCircuitInHighVoltageSide: checkBit(uint16(des), 6),
+		InputOverVoltage:              checkBit(uint16(des), 7),
+		OutputVoltageAbnormal:         checkBit(uint16(des), 8),
+		UnableToStopDischarging:       checkBit(uint16(des), 9),
+		UnableToDischarge:             checkBit(uint16(des), 10),
+		ShortCircuit:                  checkBit(uint16(des), 11),
+		OutputPowerStatus:             OutputPowerStatus(getBits(uint16(des), 12, 0x03)),
+		InputVoltageStatus:            DischargingEquipmentInputVoltageStatus(getBits(uint16(des), 14, 0x03)),
+	}
+}
+
+// ----
+
+type OutputPowerStatus uint8
+
+const (
+	OutputPowerStatusLightLoad OutputPowerStatus = iota
+	OutputPowerStatusModerateLoad
+	OutputPowerStatusRatedLoad
+	OutputPowerStatusOverload
+)
+
+func (ops OutputPowerStatus) String() string {
+	switch ops {
+	case OutputPowerStatusLightLoad:
+		return "Light Load"
+	case OutputPowerStatusModerateLoad:
+		return "Moderate Load"
+	case OutputPowerStatusRatedLoad:
+		return "Rated Load"
+	case OutputPowerStatusOverload:
+		return "Overload"
+	default:
+		return fmt.Sprintf("%02x", uint8(ops))
+	}
+}
+
+func (ops OutputPowerStatus) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ops.String())
+}
+
+// ----
+
+type DischargingEquipmentInputVoltageStatus uint8
+
+const (
+	DischargingEquipmentInputVoltageStatusNormal DischargingEquipmentInputVoltageStatus = iota
+	DischargingEquipmentInputVoltageStatusInputVoltageLow
+	DischargingEquipmentInputVoltageStatusInputVoltageHigh
+	DischargingEquipmentInputVoltageStatusNoAccess
+)
+
+func (deivs DischargingEquipmentInputVoltageStatus) String() string {
+	switch deivs {
+	case DischargingEquipmentInputVoltageStatusNormal:
+		return "Normal"
+	case DischargingEquipmentInputVoltageStatusInputVoltageLow:
+		return "Input Voltage Low"
+	case DischargingEquipmentInputVoltageStatusInputVoltageHigh:
+		return "Input Voltage High"
+	case DischargingEquipmentInputVoltageStatusNoAccess:
+		return "No Access"
+	default:
+		return fmt.Sprintf("%02x", uint8(deivs))
+	}
+}
+
+func (deivs DischargingEquipmentInputVoltageStatus) MarshalJSON() ([]byte, error) {
+	return json.Marshal(deivs.String())
 }

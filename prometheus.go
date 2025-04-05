@@ -7,34 +7,27 @@ import (
 
 type PrometheusCollectorHelper struct {
 	// rated data
-	chargingEquipmentRatedInputVoltage  *prometheus.Desc
-	chargingEquipmentRatedInputCurrent  *prometheus.Desc
-	chargingEquipmentRatedInputPower    *prometheus.Desc
-	chargingEquipmentRatedOutputVoltage *prometheus.Desc
-	chargingEquipmentRatedOutputCurrent *prometheus.Desc
-	chargingEquipmentRatedOutputPower   *prometheus.Desc
-	chargingMode                        *prometheus.Desc
-	ratedOutputCurrentOfLoad            *prometheus.Desc
+	ratedChargingCurrent    *prometheus.Desc
+	ratedLoadCurrent        *prometheus.Desc
+	batteryRealRatedVoltage *prometheus.Desc
 
 	// real-time data
-	chargingEquipmentInputVoltage     *prometheus.Desc
-	chargingEquipmentInputCurrent     *prometheus.Desc
-	chargingEquipmentInputPower       *prometheus.Desc
-	chargingEquipmentOutputVoltage    *prometheus.Desc
-	chargingEquipmentOutputCurrent    *prometheus.Desc
-	chargingEquipmentOutputPower      *prometheus.Desc
-	dischargingEquipmentOutputVoltage *prometheus.Desc
-	dischargingEquipmentOutputCurrent *prometheus.Desc
-	dischargingEquipmentOutputPower   *prometheus.Desc
-	batteryTemperature                *prometheus.Desc
-	temperatureInsideEquipment        *prometheus.Desc
-	powerComponentsTemperature        *prometheus.Desc
-	batterySOC                        *prometheus.Desc
-	currentSystemRatedVoltage         *prometheus.Desc
+	pvArrayInputVoltage *prometheus.Desc
+	pvArrayInputCurrent *prometheus.Desc
+	pvArrayInputPower   *prometheus.Desc
+	loadVoltage         *prometheus.Desc
+	loadCurrent         *prometheus.Desc
+	loadPower           *prometheus.Desc
+	batteryTemperature  *prometheus.Desc
+	deviceTemperature   *prometheus.Desc
+	batterySOC          *prometheus.Desc
+	batteryVoltage      *prometheus.Desc
+	batteryCurrent      *prometheus.Desc
 
 	// real-time status
-	batteryStatus           *prometheus.Desc
-	chargingEquipmentStatus *prometheus.Desc
+	batteryStatus              *prometheus.Desc
+	chargingEquipmentStatus    *prometheus.Desc
+	dischargingEquipmentStatus *prometheus.Desc
 
 	// statistics
 	maxInputVoltageToday     *prometheus.Desc
@@ -49,192 +42,152 @@ type PrometheusCollectorHelper struct {
 	generatedEnergyThisMonth *prometheus.Desc
 	generatedEnergyThisYear  *prometheus.Desc
 	totalGeneratedEnergy     *prometheus.Desc
-	carbonDioxideReduction   *prometheus.Desc
 }
 
 func NewPrometheusCollectorHelper(variableLabels []string, constLabels prometheus.Labels) *PrometheusCollectorHelper {
 	return &PrometheusCollectorHelper{
-		chargingEquipmentRatedInputVoltage: prometheus.NewDesc(
-			"epsolar_charging_equipment_rated_input_voltage",
-			"Charging equipment rated input voltage (V)",
+		ratedChargingCurrent: prometheus.NewDesc(
+			"epever_solar_rated_charging_current",
+			"Rated chargine current (A)",
 			variableLabels, constLabels),
-		chargingEquipmentRatedInputCurrent: prometheus.NewDesc(
-			"epsolar_charging_equipment_rated_input_current",
-			"Charging equipment rated input current (A)",
+		ratedLoadCurrent: prometheus.NewDesc(
+			"epever_solar_rated_load_current",
+			"Rated load current (A)",
 			variableLabels, constLabels),
-		chargingEquipmentRatedInputPower: prometheus.NewDesc(
-			"epsolar_charging_equipment_rated_input_power",
-			"Charging equipment rated input power (W)",
-			variableLabels, constLabels),
-		chargingEquipmentRatedOutputVoltage: prometheus.NewDesc(
-			"epsolar_charging_equipment_rated_output_voltage",
-			"Charging equipment rated output voltage (V)",
-			variableLabels, constLabels),
-		chargingEquipmentRatedOutputCurrent: prometheus.NewDesc(
-			"epsolar_charging_equipment_rated_output_current",
-			"Charging equipment rated output current (A)",
-			variableLabels, constLabels),
-		chargingEquipmentRatedOutputPower: prometheus.NewDesc(
-			"epsolar_charging_equipment_rated_output_power",
-			"Charging equipment rated output power (W)",
-			variableLabels, constLabels),
-		chargingMode: prometheus.NewDesc(
-			"epsolar_charging_mode",
-			"Charging mode",
-			variableLabels, constLabels),
-		ratedOutputCurrentOfLoad: prometheus.NewDesc(
-			"epsolar_rated_output_current_of_load",
-			"Rated output current of load (A)",
+		batteryRealRatedVoltage: prometheus.NewDesc(
+			"epever_solar_battery_real_rated_voltage",
+			"Battery real rated voltage (V)",
 			variableLabels, constLabels),
 
-		chargingEquipmentInputVoltage: prometheus.NewDesc(
-			"epsolar_charging_equipment_input_voltage",
-			"Charging equipment input voltage (V)",
+		pvArrayInputVoltage: prometheus.NewDesc(
+			"epever_solar_pv_array_input_voltage",
+			"PV array input voltage (V)",
 			variableLabels, constLabels),
-		chargingEquipmentInputCurrent: prometheus.NewDesc(
-			"epsolar_charging_equipment_input_current",
-			"Charging equipment input current (A)",
+		pvArrayInputCurrent: prometheus.NewDesc(
+			"epever_solar_pv_array_input_current",
+			"PV array input current (A)",
 			variableLabels, constLabels),
-		chargingEquipmentInputPower: prometheus.NewDesc(
-			"epsolar_charging_equipment_input_power",
-			"Charging equipment input power (W)",
+		pvArrayInputPower: prometheus.NewDesc(
+			"epever_solar_pv_array_input_power",
+			"PV array input power (W)",
 			variableLabels, constLabels),
-		chargingEquipmentOutputVoltage: prometheus.NewDesc(
-			"epsolar_charging_equipment_output_voltage",
-			"Charging equipment output voltage (V)",
+		loadVoltage: prometheus.NewDesc(
+			"epever_solar_load_voltage",
+			"Load voltage (V)",
 			variableLabels, constLabels),
-		chargingEquipmentOutputCurrent: prometheus.NewDesc(
-			"epsolar_charging_equipment_output_current",
-			"Charging equipment output current (A)",
+		loadCurrent: prometheus.NewDesc(
+			"epever_solar_load_current",
+			"Load current (A)",
 			variableLabels, constLabels),
-		chargingEquipmentOutputPower: prometheus.NewDesc(
-			"epsolar_charging_equipment_output_power",
-			"Charging equipment output power (W)",
-			variableLabels, constLabels),
-		dischargingEquipmentOutputVoltage: prometheus.NewDesc(
-			"epsolar_discharging_equipment_output_voltage",
-			"Discharging equipment output voltage (V)",
-			variableLabels, constLabels),
-		dischargingEquipmentOutputCurrent: prometheus.NewDesc(
-			"epsolar_discharging_equipment_output_current",
-			"Discharging equipment output current (A)",
-			variableLabels, constLabels),
-		dischargingEquipmentOutputPower: prometheus.NewDesc(
-			"epsolar_discharging_equipment_output_power",
-			"Discharging equipment output power (W)",
+		loadPower: prometheus.NewDesc(
+			"epever_solar_load_power",
+			"Load power (W)",
 			variableLabels, constLabels),
 		batteryTemperature: prometheus.NewDesc(
-			"epsolar_battery_temperature",
+			"epever_solar_battery_temperature",
 			"Battery temperature (°C)",
 			variableLabels, constLabels),
-		temperatureInsideEquipment: prometheus.NewDesc(
-			"epsolar_temperature_inside_equipment",
-			"Battery temperature (°C)",
-			variableLabels, constLabels),
-		powerComponentsTemperature: prometheus.NewDesc(
-			"epsolar_power_components_temperature",
-			"Power components temperature (°C)",
+		deviceTemperature: prometheus.NewDesc(
+			"epever_solar_device_temperature",
+			"Device temperature (°C)",
 			variableLabels, constLabels),
 		batterySOC: prometheus.NewDesc(
-			"epsolar_battery_remaining_capacity",
+			"epever_solar_battery_remaining_capacity",
 			"Battery remaining capacity (%)",
 			variableLabels, constLabels),
-		currentSystemRatedVoltage: prometheus.NewDesc(
-			"epsolar_current_system_rated_voltage",
-			"Current system rated voltage (V)",
+		batteryVoltage: prometheus.NewDesc(
+			"epever_solar_battery_voltage",
+			"Battery voltage (V)",
+			variableLabels, constLabels),
+		batteryCurrent: prometheus.NewDesc(
+			"epever_solar_battery_current",
+			"Battery current (A)",
 			variableLabels, constLabels),
 
 		batteryStatus: prometheus.NewDesc(
-			"epsolar_battery_status",
+			"epever_solar_battery_status",
 			"Battery status",
 			variableLabels, constLabels),
 		chargingEquipmentStatus: prometheus.NewDesc(
-			"epsolar_charging_equipment_status",
+			"epever_solar_charging_equipment_status",
 			"Charging equipment status",
+			variableLabels, constLabels),
+		dischargingEquipmentStatus: prometheus.NewDesc(
+			"epever_solar_discharging_equipment_status",
+			"Discharging equipment status",
 			variableLabels, constLabels),
 
 		maxInputVoltageToday: prometheus.NewDesc(
-			"epsolar_max_input_voltage_today",
+			"epever_solar_max_input_voltage_today",
 			"Max input voltage today (V)",
 			variableLabels, constLabels),
 		minInputVoltageToday: prometheus.NewDesc(
-			"epsolar_min_input_voltage_today",
+			"epever_solar_min_input_voltage_today",
 			"Min input voltage today (V)",
 			variableLabels, constLabels),
 		maxBatteryVoltageToday: prometheus.NewDesc(
-			"epsolar_max_battery_voltage_today",
+			"epever_solar_max_battery_voltage_today",
 			"Max battery voltage today (V)",
 			variableLabels, constLabels),
 		minBatteryVoltageToday: prometheus.NewDesc(
-			"epsolar_min_battery_voltage_today",
+			"epever_solar_min_battery_voltage_today",
 			"Min battery voltage today (V)",
 			variableLabels, constLabels),
 		consumedEnergyToday: prometheus.NewDesc(
-			"epsolar_consumed_energy_today",
+			"epever_solar_consumed_energy_today",
 			"Consumed energy today (kWh)",
 			variableLabels, constLabels),
 		consumedEnergyThisMonth: prometheus.NewDesc(
-			"epsolar_consumed_energy_this_month",
+			"epever_solar_consumed_energy_this_month",
 			"Consumed energy this month (kWh)",
 			variableLabels, constLabels),
 		consumedEnergyThisYear: prometheus.NewDesc(
-			"epsolar_consumed_energy_this_year",
+			"epever_solar_consumed_energy_this_year",
 			"Consumed energy this year (kWh)",
 			variableLabels, constLabels),
 		totalConsumedEnergy: prometheus.NewDesc(
-			"epsolar_total_consumed_energy",
+			"epever_solar_total_consumed_energy",
 			"Total consumed energy (kWh)",
 			variableLabels, constLabels),
 		generatedEnergyToday: prometheus.NewDesc(
-			"epsolar_generated_energy_today",
+			"epever_solar_generated_energy_today",
 			"Generated energy today (kWh)",
 			variableLabels, constLabels),
 		generatedEnergyThisMonth: prometheus.NewDesc(
-			"epsolar_generated_energy_this_month",
+			"epever_solar_generated_energy_this_month",
 			"Generated energy this month (kWh)",
 			variableLabels, constLabels),
 		generatedEnergyThisYear: prometheus.NewDesc(
-			"epsolar_generated_energy_this_year",
+			"epever_solar_generated_energy_this_year",
 			"Generated energy this year (kWh)",
 			variableLabels, constLabels),
 		totalGeneratedEnergy: prometheus.NewDesc(
-			"epsolar_total_generated_energy",
+			"epever_solar_total_generated_energy",
 			"Total generated energy (kWh)",
-			variableLabels, constLabels),
-		carbonDioxideReduction: prometheus.NewDesc(
-			"epsolar_carbon_dioxide_reduction",
-			"Carbon dioxide reduction (ton)",
 			variableLabels, constLabels),
 	}
 }
 
 func (c *PrometheusCollectorHelper) Describe(ch chan<- *prometheus.Desc) {
-	ch <- c.chargingEquipmentRatedInputVoltage
-	ch <- c.chargingEquipmentRatedInputCurrent
-	ch <- c.chargingEquipmentRatedInputPower
-	ch <- c.chargingEquipmentOutputVoltage
-	ch <- c.chargingEquipmentOutputCurrent
-	ch <- c.chargingEquipmentOutputPower
-	ch <- c.chargingMode
-	ch <- c.ratedOutputCurrentOfLoad
+	ch <- c.ratedChargingCurrent
+	ch <- c.ratedLoadCurrent
+	ch <- c.batteryRealRatedVoltage
 
-	ch <- c.chargingEquipmentInputVoltage
-	ch <- c.chargingEquipmentInputCurrent
-	ch <- c.chargingEquipmentInputPower
-	ch <- c.chargingEquipmentOutputVoltage
-	ch <- c.chargingEquipmentOutputCurrent
-	ch <- c.chargingEquipmentOutputPower
-	ch <- c.dischargingEquipmentOutputVoltage
-	ch <- c.dischargingEquipmentOutputCurrent
-	ch <- c.dischargingEquipmentOutputPower
+	ch <- c.pvArrayInputVoltage
+	ch <- c.pvArrayInputCurrent
+	ch <- c.pvArrayInputPower
+	ch <- c.loadVoltage
+	ch <- c.loadCurrent
+	ch <- c.loadPower
 	ch <- c.batteryTemperature
-	ch <- c.temperatureInsideEquipment
-	ch <- c.powerComponentsTemperature
+	ch <- c.deviceTemperature
 	ch <- c.batterySOC
-	ch <- c.currentSystemRatedVoltage
+	ch <- c.batteryVoltage
+	ch <- c.batteryCurrent
 
 	ch <- c.batteryStatus
 	ch <- c.chargingEquipmentStatus
+	ch <- c.dischargingEquipmentStatus
 
 	ch <- c.maxInputVoltageToday
 	ch <- c.minInputVoltageToday
@@ -248,7 +201,6 @@ func (c *PrometheusCollectorHelper) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.generatedEnergyThisMonth
 	ch <- c.generatedEnergyThisYear
 	ch <- c.totalGeneratedEnergy
-	ch <- c.carbonDioxideReduction
 }
 
 func (c *PrometheusCollectorHelper) Collect(dev *Dev, ch chan<- prometheus.Metric, labelValues ...string) {
@@ -266,14 +218,9 @@ func (c *PrometheusCollectorHelper) Collect(dev *Dev, ch chan<- prometheus.Metri
 					)
 				}
 			}()
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentRatedInputVoltage, prometheus.GaugeValue, ratedData.ChargingEquipmentRatedInputVoltage, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentRatedInputCurrent, prometheus.GaugeValue, ratedData.ChargingEquipmentRatedInputCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentRatedInputPower, prometheus.GaugeValue, ratedData.ChargingEquipmentRatedInputPower, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentRatedOutputVoltage, prometheus.GaugeValue, ratedData.ChargingEquipmentRatedOutputVoltage, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentRatedOutputCurrent, prometheus.GaugeValue, ratedData.ChargingEquipmentRatedOutputCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentRatedOutputPower, prometheus.GaugeValue, ratedData.ChargingEquipmentRatedOutputPower, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.chargingMode, prometheus.GaugeValue, float64(ratedData.ChargingMode), labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.ratedOutputCurrentOfLoad, prometheus.GaugeValue, ratedData.RatedOutputCurrentOfLoad, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.ratedChargingCurrent, prometheus.GaugeValue, ratedData.RatedChargingCurrent, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.ratedLoadCurrent, prometheus.GaugeValue, ratedData.RatedLoadCurrent, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.batteryRealRatedVoltage, prometheus.GaugeValue, ratedData.BatteryRealRatedVoltage, labelValues...)
 		}()
 	}
 
@@ -291,20 +238,17 @@ func (c *PrometheusCollectorHelper) Collect(dev *Dev, ch chan<- prometheus.Metri
 					)
 				}
 			}()
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentInputVoltage, prometheus.GaugeValue, realTimeData.ChargingEquipmentInputVoltage, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentInputCurrent, prometheus.GaugeValue, realTimeData.ChargingEquipmentInputCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentInputPower, prometheus.GaugeValue, realTimeData.ChargingEquipmentInputCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentOutputVoltage, prometheus.GaugeValue, realTimeData.ChargingEquipmentOutputVoltage, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentOutputCurrent, prometheus.GaugeValue, realTimeData.ChargingEquipmentOutputCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentOutputPower, prometheus.GaugeValue, realTimeData.ChargingEquipmentOutputCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.dischargingEquipmentOutputVoltage, prometheus.GaugeValue, realTimeData.DischargingEquipmentOutputVoltage, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.dischargingEquipmentOutputCurrent, prometheus.GaugeValue, realTimeData.DischargingEquipmentOutputCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.dischargingEquipmentOutputPower, prometheus.GaugeValue, realTimeData.DischargingEquipmentOutputCurrent, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.pvArrayInputVoltage, prometheus.GaugeValue, realTimeData.PVArrayInputVoltage, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.pvArrayInputCurrent, prometheus.GaugeValue, realTimeData.PVArrayInputCurrent, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.pvArrayInputPower, prometheus.GaugeValue, realTimeData.PVArrayInputCurrent, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.loadVoltage, prometheus.GaugeValue, realTimeData.LoadVoltage, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.loadCurrent, prometheus.GaugeValue, realTimeData.LoadCurrent, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.loadPower, prometheus.GaugeValue, realTimeData.LoadCurrent, labelValues...)
 			ch <- prometheus.MustNewConstMetric(c.batteryTemperature, prometheus.GaugeValue, realTimeData.BatteryTemperature, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.temperatureInsideEquipment, prometheus.GaugeValue, realTimeData.TemperatureInsideEquipment, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.powerComponentsTemperature, prometheus.GaugeValue, realTimeData.PowerComponentsTemperature, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.deviceTemperature, prometheus.GaugeValue, realTimeData.DeviceTemperature, labelValues...)
 			ch <- prometheus.MustNewConstMetric(c.batterySOC, prometheus.GaugeValue, realTimeData.BatterySOC, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.currentSystemRatedVoltage, prometheus.GaugeValue, realTimeData.BatteryRealRatedPower, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.batteryVoltage, prometheus.GaugeValue, realTimeData.BatteryVoltage, labelValues...)
+			ch <- prometheus.MustNewConstMetric(c.batteryCurrent, prometheus.GaugeValue, realTimeData.BatteryCurrent, labelValues...)
 		}()
 	}
 
@@ -353,7 +297,6 @@ func (c *PrometheusCollectorHelper) Collect(dev *Dev, ch chan<- prometheus.Metri
 			ch <- prometheus.MustNewConstMetric(c.generatedEnergyThisMonth, prometheus.GaugeValue, statistics.GeneratedEnergyThisMonth, labelValues...)
 			ch <- prometheus.MustNewConstMetric(c.generatedEnergyThisYear, prometheus.GaugeValue, statistics.GeneratedEnergyThisYear, labelValues...)
 			ch <- prometheus.MustNewConstMetric(c.totalGeneratedEnergy, prometheus.GaugeValue, statistics.TotalGeneratedEnergy, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.carbonDioxideReduction, prometheus.GaugeValue, statistics.CarbonDioxideReduction, labelValues...)
 		}()
 	}
 }

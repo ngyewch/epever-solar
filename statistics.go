@@ -13,8 +13,4 @@ type Statistics struct {
 	GeneratedEnergyThisMonth   float64 // kWh
 	GeneratedEnergyThisYear    float64 // kWh
 	TotalGeneratedEnergy       float64 // kWh
-	CarbonDioxideReduction     float64 // Ton
-	BatteryCurrent             float64 // A
-	BatteryTemperature         float64 // C
-	AmbientTemperature         float64 // C
 }

@@ -108,6 +108,13 @@ func doEpsolarRealTimeStatus(cCtx *cli.Context) error {
 	}
 	fmt.Println()
 
+	fmt.Println("# Discharging equipment status details")
+	err = printJSON(realTimeStatus.DischargingEquipmentStatus.Details())
+	if err != nil {
+		return err
+	}
+	fmt.Println()
+
 	return nil
 }
 

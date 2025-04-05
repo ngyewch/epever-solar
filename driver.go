@@ -39,23 +39,22 @@ func (dev *Dev) ReadRatedData() (RatedData, error) {
 	if err != nil {
 		return RatedData{}, err
 	}
-	regs, err := dev.mc.ReadRegisters(0x3000, 9, modbus.INPUT_REGISTER)
+	regs3005, err := dev.mc.ReadRegisters(0x3005, 1, modbus.INPUT_REGISTER)
 	if err != nil {
 		return RatedData{}, err
 	}
-	regs2, err := dev.mc.ReadRegisters(0x300e, 1, modbus.INPUT_REGISTER)
+	regs300e, err := dev.mc.ReadRegisters(0x300e, 1, modbus.INPUT_REGISTER)
+	if err != nil {
+		return RatedData{}, err
+	}
+	regs311d, err := dev.mc.ReadRegisters(0x311d, 1, modbus.INPUT_REGISTER)
 	if err != nil {
 		return RatedData{}, err
 	}
 	return RatedData{
-		ChargingEquipmentRatedInputVoltage:  convert16BitRegister(regs[0x00], 100),
-		ChargingEquipmentRatedInputCurrent:  convert16BitRegister(regs[0x01], 100),
-		ChargingEquipmentRatedInputPower:    convert32BitRegister(regs[0x03], regs[0x02], 100),
-		ChargingEquipmentRatedOutputVoltage: convert16BitRegister(regs[0x04], 100),
-		ChargingEquipmentRatedOutputCurrent: convert16BitRegister(regs[0x05], 100),
-		ChargingEquipmentRatedOutputPower:   convert32BitRegister(regs[0x07], regs[0x06], 100),
-		ChargingMode:                        regs[0x08],
-		RatedOutputCurrentOfLoad:            convert16BitRegister(regs2[0x00], 100),
+		RatedChargingCurrent:    convert16BitRegister(regs3005[0x00], 100), // 0x3005 Array
+		RatedLoadCurrent:        convert16BitRegister(regs300e[0x00], 100), // 0x300e DC Load
+		BatteryRealRatedVoltage: convert16BitRegister(regs311d[0x00], 100), // 0x311d Battery
 	}, nil
 }
 
@@ -67,38 +66,34 @@ func (dev *Dev) ReadRealTimeData() (RealTimeData, error) {
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	regs, err := dev.mc.ReadRegisters(0x3100, 8, modbus.INPUT_REGISTER)
+	regs3100, err := dev.mc.ReadRegisters(0x3100, 4, modbus.INPUT_REGISTER)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	regs2, err := dev.mc.ReadRegisters(0x310c, 7, modbus.INPUT_REGISTER)
+	regs310c, err := dev.mc.ReadRegisters(0x310c, 6, modbus.INPUT_REGISTER)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	regs3, err := dev.mc.ReadRegisters(0x311a, 2, modbus.INPUT_REGISTER)
+	regs311a, err := dev.mc.ReadRegisters(0x311a, 1, modbus.INPUT_REGISTER)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	regs4, err := dev.mc.ReadRegisters(0x311d, 1, modbus.INPUT_REGISTER)
+	regs331a, err := dev.mc.ReadRegisters(0x331a, 3, modbus.INPUT_REGISTER)
 	if err != nil {
 		return RealTimeData{}, err
 	}
 	return RealTimeData{
-		ChargingEquipmentInputVoltage:     convert16BitRegister(regs[0x00], 100),
-		ChargingEquipmentInputCurrent:     convert16BitRegister(regs[0x01], 100),
-		ChargingEquipmentInputPower:       convert32BitRegister(regs[0x03], regs[0x02], 100),
-		ChargingEquipmentOutputVoltage:    convert16BitRegister(regs[0x04], 100),
-		ChargingEquipmentOutputCurrent:    convert16BitRegister(regs[0x05], 100),
-		ChargingEquipmentOutputPower:      convert32BitRegister(regs[0x07], regs[0x06], 100),
-		DischargingEquipmentOutputVoltage: convert16BitRegister(regs2[0x00], 100),
-		DischargingEquipmentOutputCurrent: convert16BitRegister(regs2[0x01], 100),
-		DischargingEquipmentOutputPower:   convert32BitRegister(regs2[0x03], regs2[0x02], 100),
-		BatteryTemperature:                convert16BitRegister(regs2[0x04], 100),
-		TemperatureInsideEquipment:        convert16BitRegister(regs2[0x05], 100),
-		PowerComponentsTemperature:        convert16BitRegister(regs2[0x06], 100),
-		BatterySOC:                        convert16BitRegister(regs3[0x00], 100),
-		RemoteBatteryTemperature:          convert16BitRegister(regs3[0x01], 100),
-		BatteryRealRatedPower:             convert16BitRegister(regs4[0x00], 100),
+		PVArrayInputVoltage: convert16BitRegister(regs3100[0x00], 100),                 // 0x3100        Array
+		PVArrayInputCurrent: convert16BitRegister(regs3100[0x01], 100),                 // 0x3101        Array
+		PVArrayInputPower:   convert32BitRegister(regs3100[0x03], regs3100[0x02], 100), // 0x3102-0x3103 Array
+		LoadVoltage:         convert16BitRegister(regs310c[0x00], 100),                 // 0x310c        DC Load
+		LoadCurrent:         convert16BitRegister(regs310c[0x01], 100),                 // 0x310d        DC Load
+		LoadPower:           convert32BitRegister(regs310c[0x03], regs310c[0x02], 100), // 0x310e-0x310f DC Load
+		BatteryTemperature:  convert16BitRegister(regs310c[0x04], 100),                 // 0x3110        Battery
+		DeviceTemperature:   convert16BitRegister(regs310c[0x05], 100),                 // 0x3111        Device
+		BatterySOC:          convert16BitRegister(regs311a[0x00], 1),                   // 0x311a        Battery
+		BatteryVoltage:      convert16BitRegister(regs331a[0x00], 100),                 // 0x331a        Battery
+		BatteryCurrent:      convert32BitRegister(regs331a[0x02], regs331a[0x01], 100), // 0x331b-0x331c Battery
 	}, nil
 }
 
@@ -110,13 +105,14 @@ func (dev *Dev) ReadRealTimeStatus() (RealTimeStatus, error) {
 	if err != nil {
 		return RealTimeStatus{}, err
 	}
-	regs, err := dev.mc.ReadRegisters(0x3200, 2, modbus.INPUT_REGISTER)
+	regs3200, err := dev.mc.ReadRegisters(0x3200, 3, modbus.INPUT_REGISTER)
 	if err != nil {
 		return RealTimeStatus{}, err
 	}
 	return RealTimeStatus{
-		BatteryStatus:           BatteryStatus(regs[0x00]),
-		ChargingEquipmentStatus: ChargingEquipmentStatus(regs[0x01]),
+		BatteryStatus:              BatteryStatus(regs3200[0x00]),              // 0x3200 Battery
+		ChargingEquipmentStatus:    ChargingEquipmentStatus(regs3200[0x01]),    // 0x3201 Array
+		DischargingEquipmentStatus: DischargingEquipmentStatus(regs3200[0x02]), // 0x3202 Load
 	}, nil
 }
 
@@ -128,30 +124,22 @@ func (dev *Dev) ReadStatistics() (Statistics, error) {
 	if err != nil {
 		return Statistics{}, err
 	}
-	regs, err := dev.mc.ReadRegisters(0x3300, 22, modbus.INPUT_REGISTER)
-	if err != nil {
-		return Statistics{}, err
-	}
-	regs2, err := dev.mc.ReadRegisters(0x331b, 4, modbus.INPUT_REGISTER)
+	regs3300, err := dev.mc.ReadRegisters(0x3300, 20, modbus.INPUT_REGISTER)
 	if err != nil {
 		return Statistics{}, err
 	}
 	return Statistics{
-		MaximumInputVoltageToday:   convert16BitRegister(regs[0x00], 100),
-		MinimumInputVoltageToday:   convert16BitRegister(regs[0x01], 100),
-		MaximumBatteryVoltageToday: convert16BitRegister(regs[0x02], 100),
-		MinimumBatteryVoltageToday: convert16BitRegister(regs[0x03], 100),
-		ConsumedEnergyToday:        convert32BitRegister(regs[0x05], regs[0x04], 100),
-		ConsumedEnergyThisMonth:    convert32BitRegister(regs[0x07], regs[0x06], 100),
-		ConsumedEnergyThisYear:     convert32BitRegister(regs[0x09], regs[0x08], 100),
-		TotalConsumedEnergy:        convert32BitRegister(regs[0x0b], regs[0x0a], 100),
-		GeneratedEnergyToday:       convert32BitRegister(regs[0x0d], regs[0x0c], 100),
-		GeneratedEnergyThisMonth:   convert32BitRegister(regs[0x0f], regs[0x0e], 100),
-		GeneratedEnergyThisYear:    convert32BitRegister(regs[0x11], regs[0x10], 100),
-		TotalGeneratedEnergy:       convert32BitRegister(regs[0x13], regs[0x12], 100),
-		CarbonDioxideReduction:     convert32BitRegister(regs[0x15], regs[0x14], 100),
-		BatteryCurrent:             convert32BitRegister(regs2[0x01], regs2[0x00], 100),
-		BatteryTemperature:         convert16BitRegister(regs2[0x02], 100),
-		AmbientTemperature:         convert16BitRegister(regs2[0x03], 100),
+		MaximumInputVoltageToday:   convert16BitRegister(regs3300[0x00], 100),                 // 0x3300        Array (undocumented)
+		MinimumInputVoltageToday:   convert16BitRegister(regs3300[0x01], 100),                 // 0x3301        Array (undocumented)
+		MaximumBatteryVoltageToday: convert16BitRegister(regs3300[0x02], 100),                 // 0x3302        Battery
+		MinimumBatteryVoltageToday: convert16BitRegister(regs3300[0x03], 100),                 // 0x3303        Battery
+		ConsumedEnergyToday:        convert32BitRegister(regs3300[0x05], regs3300[0x04], 100), // 0x3304-0x3305 Consumed
+		ConsumedEnergyThisMonth:    convert32BitRegister(regs3300[0x07], regs3300[0x06], 100), // 0x3306-0x3307 Consumed
+		ConsumedEnergyThisYear:     convert32BitRegister(regs3300[0x09], regs3300[0x08], 100), // 0x3308-0x3309 Consumed
+		TotalConsumedEnergy:        convert32BitRegister(regs3300[0x0b], regs3300[0x0a], 100), // 0x330a-0x330b Consumed
+		GeneratedEnergyToday:       convert32BitRegister(regs3300[0x0d], regs3300[0x0c], 100), // 0x330c-0x330d Generated
+		GeneratedEnergyThisMonth:   convert32BitRegister(regs3300[0x0f], regs3300[0x0e], 100), // 0x330e-0x330f Generated
+		GeneratedEnergyThisYear:    convert32BitRegister(regs3300[0x11], regs3300[0x10], 100), // 0x3310-0x3311 Generated
+		TotalGeneratedEnergy:       convert32BitRegister(regs3300[0x13], regs3300[0x12], 100), // 0x3312-0x3313 Generated
 	}, nil
 }
