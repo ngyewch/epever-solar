@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/ngyewch/epsolar"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/expfmt"
 	"github.com/simonvetter/modbus"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -50,7 +50,7 @@ func doEpsolarRatedData(cCtx *cli.Context) error {
 		return err
 	}
 
-	err = printJSON(ratedData)
+	err = dump(ratedData)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func doEpsolarParameters(cCtx *cli.Context) error {
 		return err
 	}
 
-	err = printJSON(parameters)
+	err = dump(parameters)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func doEpsolarRealTimeData(cCtx *cli.Context) error {
 		return err
 	}
 
-	err = printJSON(realTimeData)
+	err = dump(realTimeData)
 	if err != nil {
 		return err
 	}
@@ -107,32 +107,10 @@ func doEpsolarRealTimeStatus(cCtx *cli.Context) error {
 		return err
 	}
 
-	err = printJSON(realTimeStatus)
+	err = dump(realTimeStatus)
 	if err != nil {
 		return err
 	}
-	fmt.Println()
-
-	fmt.Println("# Battery status details")
-	err = printJSON(realTimeStatus.BatteryStatus.Details())
-	if err != nil {
-		return err
-	}
-	fmt.Println()
-
-	fmt.Println("# Charging equipment status details")
-	err = printJSON(realTimeStatus.ChargingEquipmentStatus.Details())
-	if err != nil {
-		return err
-	}
-	fmt.Println()
-
-	fmt.Println("# Discharging equipment status details")
-	err = printJSON(realTimeStatus.DischargingEquipmentStatus.Details())
-	if err != nil {
-		return err
-	}
-	fmt.Println()
 
 	return nil
 }
@@ -148,7 +126,7 @@ func doEpsolarStatistics(cCtx *cli.Context) error {
 		return err
 	}
 
-	err = printJSON(statistics)
+	err = dump(statistics)
 	if err != nil {
 		return err
 	}
@@ -156,9 +134,51 @@ func doEpsolarStatistics(cCtx *cli.Context) error {
 	return nil
 }
 
-func printJSON(v any) error {
-	jsonEncoder := json.NewEncoder(os.Stdout)
-	jsonEncoder.SetIndent("", "  ")
-	jsonEncoder.SetEscapeHTML(false)
-	return jsonEncoder.Encode(v)
+func doEpsolarPrometheus(cCtx *cli.Context) error {
+	e, err := newEpsolar(cCtx)
+	if err != nil {
+		return err
+	}
+
+	reg := prometheus.NewRegistry()
+	collectorHelper := epsolar.NewPrometheusCollectorHelper(nil, nil)
+	c := collector{
+		dev:    e,
+		helper: collectorHelper,
+	}
+	err = reg.Register(&c)
+	if err != nil {
+		return err
+	}
+	gatherer := prometheus.Gatherers{
+		reg,
+	}
+	metricFamilies, err := gatherer.Gather()
+	if err != nil {
+		return err
+	}
+
+	fmt := expfmt.NewFormat(expfmt.TypeTextPlain)
+	encoder := expfmt.NewEncoder(os.Stdout, fmt)
+	for _, mf := range metricFamilies {
+		err = encoder.Encode(mf)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+type collector struct {
+	dev    *epsolar.Dev
+	helper *epsolar.PrometheusCollectorHelper
+}
+
+func (c *collector) Describe(ch chan<- *prometheus.Desc) {
+	c.helper.Describe(ch)
+}
+
+func (c *collector) Collect(ch chan<- prometheus.Metric) {
+	c.helper.Collect(c.dev, ch)
 }

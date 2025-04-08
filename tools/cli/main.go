@@ -61,6 +61,11 @@ var (
 				Usage:  "parameters",
 				Action: doEpsolarParameters,
 			},
+			{
+				Name:   "prometheus",
+				Usage:  "prometheus",
+				Action: doEpsolarPrometheus,
+			},
 		},
 	}
 )

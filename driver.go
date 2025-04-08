@@ -1,6 +1,8 @@
 package epsolar
 
 import (
+	"encoding/binary"
+	"errors"
 	"github.com/simonvetter/modbus"
 	"sync"
 )
@@ -39,23 +41,51 @@ func (dev *Dev) ReadRatedData() (RatedData, error) {
 	if err != nil {
 		return RatedData{}, err
 	}
-	regs3005, err := dev.mc.ReadRegisters(0x3005, 1, modbus.INPUT_REGISTER)
+
+	var r RatedData
+
+	r.ArrayRatedVoltage, err = dev.readInputRegister16AsFloat64(0x3000, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
-	regs300e, err := dev.mc.ReadRegisters(0x300e, 1, modbus.INPUT_REGISTER)
+	r.ArrayRatedCurrent, err = dev.readInputRegister16AsFloat64(0x3001, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
-	regs311d, err := dev.mc.ReadRegisters(0x311d, 1, modbus.INPUT_REGISTER)
+	r.ArrayRatedPower, err = dev.readInputRegister32AsFloat64(0x3002, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
-	return RatedData{
-		RatedChargingCurrent:    convert16BitRegister(regs3005[0x00], 100), // 0x3005 Array
-		RatedLoadCurrent:        convert16BitRegister(regs300e[0x00], 100), // 0x300e DC Load
-		BatteryRealRatedVoltage: convert16BitRegister(regs311d[0x00], 100), // 0x311d Battery
-	}, nil
+	r.BatteryRatedVoltage, err = dev.readInputRegister16AsFloat64(0x3004, 100)
+	if err != nil {
+		return RatedData{}, err
+	}
+	r.BatteryRatedCurrent, err = dev.readInputRegister16AsFloat64(0x3005, 100)
+	if err != nil {
+		return RatedData{}, err
+	}
+	r.BatteryRatedPower, err = dev.readInputRegister32AsFloat64(0x3006, 100)
+	if err != nil {
+		return RatedData{}, err
+	}
+	r.LoadRatedVoltage, err = dev.readInputRegister16AsFloat64(0x300d, 100)
+	if err != nil {
+		return RatedData{}, err
+	}
+	r.LoadRatedCurrent, err = dev.readInputRegister16AsFloat64(0x300e, 100)
+	if err != nil {
+		return RatedData{}, err
+	}
+	r.LoadRatedPower, err = dev.readInputRegister32AsFloat64(0x300f, 100)
+	if err != nil {
+		return RatedData{}, err
+	}
+	r.BatteryRealRatedVoltage, err = dev.readInputRegister16AsFloat64(0x311d, 100)
+	if err != nil {
+		return RatedData{}, err
+	}
+
+	return r, nil
 }
 
 func (dev *Dev) ReadParameters() (Parameters, error) {
@@ -66,51 +96,132 @@ func (dev *Dev) ReadParameters() (Parameters, error) {
 	if err != nil {
 		return Parameters{}, err
 	}
-	regs9000, err := dev.mc.ReadRegisters(0x9000, 15, modbus.HOLDING_REGISTER)
+
+	var r Parameters
+
+	{
+		v, err := dev.mc.ReadRegister(0x9000, modbus.HOLDING_REGISTER)
+		if err != nil {
+			if !errors.Is(err, modbus.ErrIllegalDataAddress) {
+				return Parameters{}, err
+			}
+		} else {
+			v2 := BatteryType(v)
+			r.BatteryType = &v2
+		}
+	}
+	r.BatteryCapacity, err = dev.readHoldingRegister16AsFloat64(0x9001, 1)
 	if err != nil {
 		return Parameters{}, err
 	}
-	regs9067, err := dev.mc.ReadRegisters(0x9067, 1, modbus.HOLDING_REGISTER)
+	r.TemperatureCompensationCoefficient, err = dev.readHoldingRegister16AsFloat64(0x9002, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	regs906a, err := dev.mc.ReadRegisters(0x906a, 5, modbus.HOLDING_REGISTER)
+	r.OverVoltageDisconnectVoltage, err = dev.readHoldingRegister16AsFloat64(0x9003, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	regs9070, err := dev.mc.ReadRegisters(0x9070, 1, modbus.HOLDING_REGISTER)
+	r.ChargingLimitVoltage, err = dev.readHoldingRegister16AsFloat64(0x9004, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	regs9107, err := dev.mc.ReadRegisters(0x9107, 1, modbus.HOLDING_REGISTER)
+	r.OverVoltageReconnectVoltage, err = dev.readHoldingRegister16AsFloat64(0x9005, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	return Parameters{
-		BatteryType:                                    BatteryType(regs9000[0x00]),                                    // 0x9000
-		BatteryCapacity:                                convert16BitRegister(regs9000[0x01], 1),                        // 0x9001
-		TemperatureCompensationCoefficient:             convert16BitRegister(regs9000[0x02], 100),                      // 0x9002
-		OverVoltageDisconnectVoltage:                   convert16BitRegister(regs9000[0x03], 100),                      // 0x9003
-		ChargingLimitVoltage:                           convert16BitRegister(regs9000[0x04], 100),                      // 0x9004
-		OverVoltageReconnectVoltage:                    convert16BitRegister(regs9000[0x05], 100),                      // 0x9005
-		EqualizeChargingVoltage:                        convert16BitRegister(regs9000[0x06], 100),                      // 0x9006
-		BoostChargingVoltage:                           convert16BitRegister(regs9000[0x07], 100),                      // 0x9007
-		FloatChargingVoltage:                           convert16BitRegister(regs9000[0x08], 100),                      // 0x9008
-		BoostReconnectChargingVoltage:                  convert16BitRegister(regs9000[0x09], 100),                      // 0x9009
-		LowVoltageReconnectVoltage:                     convert16BitRegister(regs9000[0x0A], 100),                      // 0x900a
-		UnderVoltageWarningRecoverVoltage:              convert16BitRegister(regs9000[0x0B], 100),                      // 0x900b
-		UnderVoltageWarningVoltage:                     convert16BitRegister(regs9000[0x0C], 100),                      // 0x900c
-		LowVoltageDisconnectVoltage:                    convert16BitRegister(regs9000[0x0D], 100),                      // 0x900d
-		DischargingLimitVoltage:                        convert16BitRegister(regs9000[0x0E], 100),                      // 0x900e
-		BatteryRatedVoltageLevel:                       BatteryRatedVoltageLevel(regs9067[0x00]),                       // 0x9067
-		DefaultLoadOnOffInManualMode:                   regs906a[0x00],                                                 // 0x906a
-		EqualizeDuration:                               regs906a[0x01],                                                 // 0x906b
-		BoostDuration:                                  regs906a[0x02],                                                 // 0x906c
-		BatteryDischarge:                               convert16BitRegister(regs906a[0x03], 100),                      // 0x906d
-		BatteryCharge:                                  convert16BitRegister(regs906a[0x04], 100),                      // 0x906e
-		ChargingMode:                                   ChargingMode(regs9070[0x00]),                                   // 0x9070
-		LiBatteryProtectionAndOverTemperatureDropPower: LiBatteryProtectionAndOverTemperatureDropPower(regs9107[0x00]), // 0x9107
-	}, nil
+	r.EqualizeChargingVoltage, err = dev.readHoldingRegister16AsFloat64(0x9006, 100)
+	if err != nil {
+		return Parameters{}, err
+	}
+	r.BoostChargingVoltage, err = dev.readHoldingRegister16AsFloat64(0x9007, 100)
+	if err != nil {
+		return Parameters{}, err
+	}
+	r.FloatChargingVoltage, err = dev.readHoldingRegister16AsFloat64(0x9008, 100)
+	if err != nil {
+		return Parameters{}, err
+	}
+	r.BoostReconnectChargingVoltage, err = dev.readHoldingRegister16AsFloat64(0x9009, 100)
+	if err != nil {
+		return Parameters{}, err
+	}
+	r.LowVoltageReconnectVoltage, err = dev.readHoldingRegister16AsFloat64(0x900a, 100)
+	if err != nil {
+		return Parameters{}, err
+	}
+	r.UnderVoltageWarningRecoverVoltage, err = dev.readHoldingRegister16AsFloat64(0x900b, 100)
+	if err != nil {
+		return Parameters{}, err
+	}
+	r.UnderVoltageWarningVoltage, err = dev.readHoldingRegister16AsFloat64(0x900c, 100)
+	if err != nil {
+		return Parameters{}, err
+	}
+	r.LowVoltageDisconnectVoltage, err = dev.readHoldingRegister16AsFloat64(0x900d, 100)
+	if err != nil {
+		return Parameters{}, err
+	}
+	r.DischargingLimitVoltage, err = dev.readHoldingRegister16AsFloat64(0x900e, 100)
+	if err != nil {
+		return Parameters{}, err
+	}
+	{
+		v, err := dev.mc.ReadRegister(0x9067, modbus.HOLDING_REGISTER)
+		if err != nil {
+			if !errors.Is(err, modbus.ErrIllegalDataAddress) {
+				return Parameters{}, err
+			}
+		} else {
+			v2 := BatteryRatedVoltageLevel(v)
+			r.BatteryRatedVoltageLevel = &v2
+		}
+	}
+	r.DefaultLoadOnOffInManualMode, err = dev.readHoldingRegister16(0x906a)
+	if err != nil {
+		return Parameters{}, err
+	}
+	r.EqualizeDuration, err = dev.readHoldingRegister16(0x906b)
+	if err != nil {
+		return Parameters{}, err
+	}
+	r.BoostDuration, err = dev.readHoldingRegister16(0x906c)
+	if err != nil {
+		return Parameters{}, err
+	}
+	r.BatteryDischarge, err = dev.readHoldingRegister16AsFloat64(0x906d, 100) // NOTE: possibly incorrect documentation (divisor)
+	if err != nil {
+		return Parameters{}, err
+	}
+	r.BatteryCharge, err = dev.readHoldingRegister16AsFloat64(0x906e, 100) // NOTE: possibly incorrect documentation (divisor)
+	if err != nil {
+		return Parameters{}, err
+	}
+	{
+		v, err := dev.mc.ReadRegister(0x9070, modbus.HOLDING_REGISTER)
+		if err != nil {
+			if !errors.Is(err, modbus.ErrIllegalDataAddress) {
+				return Parameters{}, err
+			}
+		} else {
+			v2 := ChargingMode(v)
+			r.ChargingMode = &v2
+		}
+	}
+	{
+		v, err := dev.mc.ReadRegister(0x9107, modbus.HOLDING_REGISTER)
+		if err != nil {
+			if !errors.Is(err, modbus.ErrIllegalDataAddress) {
+				return Parameters{}, err
+			}
+		} else {
+			v2 := LiBatteryProtectionAndOverTemperatureDropPower(v)
+			details := v2.Details()
+			r.LiBatteryProtectionAndOverTemperatureDropPower = &details
+		}
+	}
+
+	return r, nil
 }
 
 func (dev *Dev) ReadRealTimeData() (RealTimeData, error) {
@@ -121,35 +232,55 @@ func (dev *Dev) ReadRealTimeData() (RealTimeData, error) {
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	regs3100, err := dev.mc.ReadRegisters(0x3100, 4, modbus.INPUT_REGISTER)
+
+	var r RealTimeData
+
+	r.PVArrayInputVoltage, err = dev.readInputRegister16AsFloat64(0x3100, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	regs310c, err := dev.mc.ReadRegisters(0x310c, 6, modbus.INPUT_REGISTER)
+	r.PVArrayInputCurrent, err = dev.readInputRegister16AsFloat64(0x3101, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	regs311a, err := dev.mc.ReadRegisters(0x311a, 1, modbus.INPUT_REGISTER)
+	r.PVArrayInputPower, err = dev.readInputRegister32AsFloat64(0x3102, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	regs331a, err := dev.mc.ReadRegisters(0x331a, 3, modbus.INPUT_REGISTER)
+	r.LoadVoltage, err = dev.readInputRegister16AsFloat64(0x310c, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	return RealTimeData{
-		PVArrayInputVoltage: convert16BitRegister(regs3100[0x00], 100),                 // 0x3100        Array
-		PVArrayInputCurrent: convert16BitRegister(regs3100[0x01], 100),                 // 0x3101        Array
-		PVArrayInputPower:   convert32BitRegister(regs3100[0x03], regs3100[0x02], 100), // 0x3102-0x3103 Array
-		LoadVoltage:         convert16BitRegister(regs310c[0x00], 100),                 // 0x310c        DC Load
-		LoadCurrent:         convert16BitRegister(regs310c[0x01], 100),                 // 0x310d        DC Load
-		LoadPower:           convert32BitRegister(regs310c[0x03], regs310c[0x02], 100), // 0x310e-0x310f DC Load
-		BatteryTemperature:  convert16BitRegister(regs310c[0x04], 100),                 // 0x3110        Battery
-		DeviceTemperature:   convert16BitRegister(regs310c[0x05], 100),                 // 0x3111        Device
-		BatterySOC:          convert16BitRegister(regs311a[0x00], 1),                   // 0x311a        Battery
-		BatteryVoltage:      convert16BitRegister(regs331a[0x00], 100),                 // 0x331a        Battery
-		BatteryCurrent:      convert32BitRegister(regs331a[0x02], regs331a[0x01], 100), // 0x331b-0x331c Battery
-	}, nil
+	r.LoadCurrent, err = dev.readInputRegister16AsFloat64(0x310d, 100)
+	if err != nil {
+		return RealTimeData{}, err
+	}
+	r.LoadPower, err = dev.readInputRegister32AsFloat64(0x310e, 100)
+	if err != nil {
+		return RealTimeData{}, err
+	}
+	r.BatteryTemperature, err = dev.readInputRegister16AsFloat64(0x3110, 100)
+	if err != nil {
+		return RealTimeData{}, err
+	}
+	r.DeviceTemperature, err = dev.readInputRegister16AsFloat64(0x3111, 100)
+	if err != nil {
+		return RealTimeData{}, err
+	}
+	r.BatterySOC, err = dev.readInputRegister16AsFloat64(0x311a, 1)
+	if err != nil {
+		return RealTimeData{}, err
+	}
+	r.BatteryVoltage, err = dev.readInputRegister16AsFloat64(0x331a, 100)
+	if err != nil {
+		return RealTimeData{}, err
+	}
+	r.BatteryCurrent, err = dev.readInputRegister32AsFloat64(0x331b, 100)
+	if err != nil {
+		return RealTimeData{}, err
+	}
+
+	return r, nil
 }
 
 func (dev *Dev) ReadRealTimeStatus() (RealTimeStatus, error) {
@@ -160,15 +291,55 @@ func (dev *Dev) ReadRealTimeStatus() (RealTimeStatus, error) {
 	if err != nil {
 		return RealTimeStatus{}, err
 	}
-	regs3200, err := dev.mc.ReadRegisters(0x3200, 3, modbus.INPUT_REGISTER)
+
+	var r RealTimeStatus
+
+	r.OverTemperatureInsideTheDevice, err = dev.readDiscreteInput(0x2000)
 	if err != nil {
 		return RealTimeStatus{}, err
 	}
-	return RealTimeStatus{
-		BatteryStatus:              BatteryStatus(regs3200[0x00]),              // 0x3200 Battery
-		ChargingEquipmentStatus:    ChargingEquipmentStatus(regs3200[0x01]),    // 0x3201 Array
-		DischargingEquipmentStatus: DischargingEquipmentStatus(regs3200[0x02]), // 0x3202 Load
-	}, nil
+	r.Night, err = dev.readDiscreteInput(0x200c)
+	if err != nil {
+		return RealTimeStatus{}, err
+	}
+	{
+		v, err := dev.mc.ReadRegister(0x3200, modbus.INPUT_REGISTER)
+		if err != nil {
+			if !errors.Is(err, modbus.ErrIllegalDataAddress) {
+				return RealTimeStatus{}, err
+			}
+		} else {
+			v2 := BatteryStatus(v)
+			details := v2.Details()
+			r.BatteryStatus = &details
+		}
+	}
+	{
+		v, err := dev.mc.ReadRegister(0x3201, modbus.INPUT_REGISTER)
+		if err != nil {
+			if !errors.Is(err, modbus.ErrIllegalDataAddress) {
+				return RealTimeStatus{}, err
+			}
+		} else {
+			v2 := ChargingEquipmentStatus(v)
+			details := v2.Details()
+			r.ChargingEquipmentStatus = &details
+		}
+	}
+	{
+		v, err := dev.mc.ReadRegister(0x3202, modbus.INPUT_REGISTER)
+		if err != nil {
+			if !errors.Is(err, modbus.ErrIllegalDataAddress) {
+				return RealTimeStatus{}, err
+			}
+		} else {
+			v2 := DischargingEquipmentStatus(v)
+			details := v2.Details()
+			r.DischargingEquipmentStatus = &details
+		}
+	}
+
+	return r, nil
 }
 
 func (dev *Dev) ReadStatistics() (Statistics, error) {
@@ -179,22 +350,123 @@ func (dev *Dev) ReadStatistics() (Statistics, error) {
 	if err != nil {
 		return Statistics{}, err
 	}
-	regs3300, err := dev.mc.ReadRegisters(0x3300, 20, modbus.INPUT_REGISTER)
+
+	var r Statistics
+
+	r.MaximumArrayVoltageToday, err = dev.readInputRegister16AsFloat64(0x3300, 100) // undocumented
 	if err != nil {
 		return Statistics{}, err
 	}
-	return Statistics{
-		MaximumInputVoltageToday:   convert16BitRegister(regs3300[0x00], 100),                 // 0x3300        Array (undocumented)
-		MinimumInputVoltageToday:   convert16BitRegister(regs3300[0x01], 100),                 // 0x3301        Array (undocumented)
-		MaximumBatteryVoltageToday: convert16BitRegister(regs3300[0x02], 100),                 // 0x3302        Battery
-		MinimumBatteryVoltageToday: convert16BitRegister(regs3300[0x03], 100),                 // 0x3303        Battery
-		ConsumedEnergyToday:        convert32BitRegister(regs3300[0x05], regs3300[0x04], 100), // 0x3304-0x3305 Consumed
-		ConsumedEnergyThisMonth:    convert32BitRegister(regs3300[0x07], regs3300[0x06], 100), // 0x3306-0x3307 Consumed
-		ConsumedEnergyThisYear:     convert32BitRegister(regs3300[0x09], regs3300[0x08], 100), // 0x3308-0x3309 Consumed
-		TotalConsumedEnergy:        convert32BitRegister(regs3300[0x0b], regs3300[0x0a], 100), // 0x330a-0x330b Consumed
-		GeneratedEnergyToday:       convert32BitRegister(regs3300[0x0d], regs3300[0x0c], 100), // 0x330c-0x330d Generated
-		GeneratedEnergyThisMonth:   convert32BitRegister(regs3300[0x0f], regs3300[0x0e], 100), // 0x330e-0x330f Generated
-		GeneratedEnergyThisYear:    convert32BitRegister(regs3300[0x11], regs3300[0x10], 100), // 0x3310-0x3311 Generated
-		TotalGeneratedEnergy:       convert32BitRegister(regs3300[0x13], regs3300[0x12], 100), // 0x3312-0x3313 Generated
-	}, nil
+	r.MinimumArrayVoltageToday, err = dev.readInputRegister16AsFloat64(0x3301, 100) // undocumented
+	if err != nil {
+		return Statistics{}, err
+	}
+	r.MaximumBatteryVoltageToday, err = dev.readInputRegister16AsFloat64(0x3302, 100)
+	if err != nil {
+		return Statistics{}, err
+	}
+	r.MinimumBatteryVoltageToday, err = dev.readInputRegister16AsFloat64(0x3303, 100)
+	if err != nil {
+		return Statistics{}, err
+	}
+	r.ConsumedEnergyToday, err = dev.readInputRegister32AsFloat64(0x3304, 100)
+	if err != nil {
+		return Statistics{}, err
+	}
+	r.ConsumedEnergyThisMonth, err = dev.readInputRegister32AsFloat64(0x3306, 100)
+	if err != nil {
+		return Statistics{}, err
+	}
+	r.ConsumedEnergyThisYear, err = dev.readInputRegister32AsFloat64(0x3308, 100)
+	if err != nil {
+		return Statistics{}, err
+	}
+	r.TotalConsumedEnergy, err = dev.readInputRegister32AsFloat64(0x330a, 100)
+	if err != nil {
+		return Statistics{}, err
+	}
+	r.GeneratedEnergyToday, err = dev.readInputRegister32AsFloat64(0x330c, 100)
+	if err != nil {
+		return Statistics{}, err
+	}
+	r.GeneratedEnergyThisMonth, err = dev.readInputRegister32AsFloat64(0x330e, 100)
+	if err != nil {
+		return Statistics{}, err
+	}
+	r.GeneratedEnergyThisYear, err = dev.readInputRegister32AsFloat64(0x3310, 100)
+	if err != nil {
+		return Statistics{}, err
+	}
+	r.TotalGeneratedEnergy, err = dev.readInputRegister32AsFloat64(0x3312, 100)
+	if err != nil {
+		return Statistics{}, err
+	}
+
+	return r, nil
+}
+
+func (dev *Dev) readInputRegister16AsFloat64(addr uint16, divisor float64) (*float64, error) {
+	v, err := dev.mc.ReadRegister(addr, modbus.INPUT_REGISTER)
+	if err != nil {
+		if errors.Is(err, modbus.ErrIllegalDataAddress) {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	f64 := float64(v) / divisor
+	return &f64, nil
+}
+
+func (dev *Dev) readInputRegister32AsFloat64(addr uint16, divisor float64) (*float64, error) {
+	v, err := dev.mc.ReadRegisters(addr, 2, modbus.INPUT_REGISTER)
+	if err != nil {
+		if errors.Is(err, modbus.ErrIllegalDataAddress) {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	var b []byte
+	b = binary.BigEndian.AppendUint16(b, v[1])
+	b = binary.BigEndian.AppendUint16(b, v[0])
+	f64 := float64(int32(binary.BigEndian.Uint32(b))) / divisor
+	return &f64, nil
+}
+
+func (dev *Dev) readHoldingRegister16(addr uint16) (*uint16, error) {
+	v, err := dev.mc.ReadRegister(addr, modbus.HOLDING_REGISTER)
+	if err != nil {
+		if errors.Is(err, modbus.ErrIllegalDataAddress) {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	return &v, nil
+}
+
+func (dev *Dev) readHoldingRegister16AsFloat64(addr uint16, divisor float64) (*float64, error) {
+	v, err := dev.mc.ReadRegister(addr, modbus.HOLDING_REGISTER)
+	if err != nil {
+		if errors.Is(err, modbus.ErrIllegalDataAddress) {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	f64 := float64(v) / divisor
+	return &f64, nil
+}
+
+func (dev *Dev) readDiscreteInput(addr uint16) (*bool, error) {
+	v, err := dev.mc.ReadDiscreteInput(addr)
+	if err != nil {
+		if errors.Is(err, modbus.ErrIllegalDataAddress) {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	return &v, nil
 }

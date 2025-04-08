@@ -25,8 +25,8 @@ type PrometheusCollectorHelper struct {
 	dischargingEquipmentStatus *prometheus.Desc
 
 	// statistics
-	maxInputVoltageToday     *prometheus.Desc
-	minInputVoltageToday     *prometheus.Desc
+	maxArrayVoltageToday     *prometheus.Desc
+	minArrayVoltageToday     *prometheus.Desc
 	maxBatteryVoltageToday   *prometheus.Desc
 	minBatteryVoltageToday   *prometheus.Desc
 	consumedEnergyToday      *prometheus.Desc
@@ -99,13 +99,13 @@ func NewPrometheusCollectorHelper(variableLabels []string, constLabels prometheu
 			"Discharging equipment status",
 			variableLabels, constLabels),
 
-		maxInputVoltageToday: prometheus.NewDesc(
-			"epever_solar_max_input_voltage_today",
-			"Max input voltage today (V)",
+		maxArrayVoltageToday: prometheus.NewDesc(
+			"epever_solar_max_array_voltage_today",
+			"Max array voltage today (V)",
 			variableLabels, constLabels),
-		minInputVoltageToday: prometheus.NewDesc(
-			"epever_solar_min_input_voltage_today",
-			"Min input voltage today (V)",
+		minArrayVoltageToday: prometheus.NewDesc(
+			"epever_solar_min_array_voltage_today",
+			"Min array voltage today (V)",
 			variableLabels, constLabels),
 		maxBatteryVoltageToday: prometheus.NewDesc(
 			"epever_solar_max_battery_voltage_today",
@@ -167,8 +167,8 @@ func (c *PrometheusCollectorHelper) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.chargingEquipmentStatus
 	ch <- c.dischargingEquipmentStatus
 
-	ch <- c.maxInputVoltageToday
-	ch <- c.minInputVoltageToday
+	ch <- c.maxArrayVoltageToday
+	ch <- c.minArrayVoltageToday
 	ch <- c.maxBatteryVoltageToday
 	ch <- c.minBatteryVoltageToday
 	ch <- c.consumedEnergyToday
@@ -196,17 +196,39 @@ func (c *PrometheusCollectorHelper) Collect(dev *Dev, ch chan<- prometheus.Metri
 					)
 				}
 			}()
-			ch <- prometheus.MustNewConstMetric(c.pvArrayInputVoltage, prometheus.GaugeValue, realTimeData.PVArrayInputVoltage, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.pvArrayInputCurrent, prometheus.GaugeValue, realTimeData.PVArrayInputCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.pvArrayInputPower, prometheus.GaugeValue, realTimeData.PVArrayInputCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.loadVoltage, prometheus.GaugeValue, realTimeData.LoadVoltage, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.loadCurrent, prometheus.GaugeValue, realTimeData.LoadCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.loadPower, prometheus.GaugeValue, realTimeData.LoadCurrent, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.batteryTemperature, prometheus.GaugeValue, realTimeData.BatteryTemperature, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.deviceTemperature, prometheus.GaugeValue, realTimeData.DeviceTemperature, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.batterySOC, prometheus.GaugeValue, realTimeData.BatterySOC, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.batteryVoltage, prometheus.GaugeValue, realTimeData.BatteryVoltage, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.batteryCurrent, prometheus.GaugeValue, realTimeData.BatteryCurrent, labelValues...)
+			if realTimeData.PVArrayInputVoltage != nil {
+				ch <- prometheus.MustNewConstMetric(c.pvArrayInputVoltage, prometheus.GaugeValue, *realTimeData.PVArrayInputVoltage, labelValues...)
+			}
+			if realTimeData.PVArrayInputCurrent != nil {
+				ch <- prometheus.MustNewConstMetric(c.pvArrayInputCurrent, prometheus.GaugeValue, *realTimeData.PVArrayInputCurrent, labelValues...)
+			}
+			if realTimeData.PVArrayInputPower != nil {
+				ch <- prometheus.MustNewConstMetric(c.pvArrayInputPower, prometheus.GaugeValue, *realTimeData.PVArrayInputPower, labelValues...)
+			}
+			if realTimeData.LoadVoltage != nil {
+				ch <- prometheus.MustNewConstMetric(c.loadVoltage, prometheus.GaugeValue, *realTimeData.LoadVoltage, labelValues...)
+			}
+			if realTimeData.LoadCurrent != nil {
+				ch <- prometheus.MustNewConstMetric(c.loadCurrent, prometheus.GaugeValue, *realTimeData.LoadCurrent, labelValues...)
+			}
+			if realTimeData.LoadPower != nil {
+				ch <- prometheus.MustNewConstMetric(c.loadPower, prometheus.GaugeValue, *realTimeData.LoadPower, labelValues...)
+			}
+			if realTimeData.BatteryTemperature != nil {
+				ch <- prometheus.MustNewConstMetric(c.batteryTemperature, prometheus.GaugeValue, *realTimeData.BatteryTemperature, labelValues...)
+			}
+			if realTimeData.DeviceTemperature != nil {
+				ch <- prometheus.MustNewConstMetric(c.deviceTemperature, prometheus.GaugeValue, *realTimeData.DeviceTemperature, labelValues...)
+			}
+			if realTimeData.BatterySOC != nil {
+				ch <- prometheus.MustNewConstMetric(c.batterySOC, prometheus.GaugeValue, *realTimeData.BatterySOC, labelValues...)
+			}
+			if realTimeData.BatteryVoltage != nil {
+				ch <- prometheus.MustNewConstMetric(c.batteryVoltage, prometheus.GaugeValue, *realTimeData.BatteryVoltage, labelValues...)
+			}
+			if realTimeData.BatteryCurrent != nil {
+				ch <- prometheus.MustNewConstMetric(c.batteryCurrent, prometheus.GaugeValue, *realTimeData.BatteryCurrent, labelValues...)
+			}
 		}()
 	}
 
@@ -224,8 +246,15 @@ func (c *PrometheusCollectorHelper) Collect(dev *Dev, ch chan<- prometheus.Metri
 					)
 				}
 			}()
-			ch <- prometheus.MustNewConstMetric(c.batteryStatus, prometheus.GaugeValue, float64(realTimeStatus.BatteryStatus), labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.chargingEquipmentStatus, prometheus.GaugeValue, float64(realTimeStatus.ChargingEquipmentStatus), labelValues...)
+			if realTimeStatus.BatteryStatus != nil {
+				ch <- prometheus.MustNewConstMetric(c.batteryStatus, prometheus.GaugeValue, float64((*realTimeStatus.BatteryStatus).Raw), labelValues...)
+			}
+			if realTimeStatus.ChargingEquipmentStatus != nil {
+				ch <- prometheus.MustNewConstMetric(c.chargingEquipmentStatus, prometheus.GaugeValue, float64((realTimeStatus.ChargingEquipmentStatus).Raw), labelValues...)
+			}
+			if realTimeStatus.DischargingEquipmentStatus != nil {
+				ch <- prometheus.MustNewConstMetric(c.dischargingEquipmentStatus, prometheus.GaugeValue, float64((realTimeStatus.DischargingEquipmentStatus).Raw), labelValues...)
+			}
 		}()
 	}
 
@@ -243,18 +272,42 @@ func (c *PrometheusCollectorHelper) Collect(dev *Dev, ch chan<- prometheus.Metri
 					)
 				}
 			}()
-			ch <- prometheus.MustNewConstMetric(c.maxInputVoltageToday, prometheus.GaugeValue, statistics.MaximumInputVoltageToday, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.minInputVoltageToday, prometheus.GaugeValue, statistics.MinimumInputVoltageToday, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.maxBatteryVoltageToday, prometheus.GaugeValue, statistics.MaximumBatteryVoltageToday, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.minBatteryVoltageToday, prometheus.GaugeValue, statistics.MinimumBatteryVoltageToday, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.consumedEnergyToday, prometheus.GaugeValue, statistics.ConsumedEnergyToday, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.consumedEnergyThisMonth, prometheus.GaugeValue, statistics.ConsumedEnergyThisMonth, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.consumedEnergyThisYear, prometheus.GaugeValue, statistics.ConsumedEnergyThisYear, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.totalConsumedEnergy, prometheus.GaugeValue, statistics.TotalConsumedEnergy, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.generatedEnergyToday, prometheus.GaugeValue, statistics.GeneratedEnergyToday, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.generatedEnergyThisMonth, prometheus.GaugeValue, statistics.GeneratedEnergyThisMonth, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.generatedEnergyThisYear, prometheus.GaugeValue, statistics.GeneratedEnergyThisYear, labelValues...)
-			ch <- prometheus.MustNewConstMetric(c.totalGeneratedEnergy, prometheus.GaugeValue, statistics.TotalGeneratedEnergy, labelValues...)
+			if statistics.MaximumArrayVoltageToday != nil {
+				ch <- prometheus.MustNewConstMetric(c.maxArrayVoltageToday, prometheus.GaugeValue, *statistics.MaximumArrayVoltageToday, labelValues...)
+			}
+			if statistics.MinimumArrayVoltageToday != nil {
+				ch <- prometheus.MustNewConstMetric(c.minArrayVoltageToday, prometheus.GaugeValue, *statistics.MinimumArrayVoltageToday, labelValues...)
+			}
+			if statistics.MaximumBatteryVoltageToday != nil {
+				ch <- prometheus.MustNewConstMetric(c.maxBatteryVoltageToday, prometheus.GaugeValue, *statistics.MaximumBatteryVoltageToday, labelValues...)
+			}
+			if statistics.MinimumBatteryVoltageToday != nil {
+				ch <- prometheus.MustNewConstMetric(c.minBatteryVoltageToday, prometheus.GaugeValue, *statistics.MinimumBatteryVoltageToday, labelValues...)
+			}
+			if statistics.ConsumedEnergyToday != nil {
+				ch <- prometheus.MustNewConstMetric(c.consumedEnergyToday, prometheus.GaugeValue, *statistics.ConsumedEnergyToday, labelValues...)
+			}
+			if statistics.ConsumedEnergyThisMonth != nil {
+				ch <- prometheus.MustNewConstMetric(c.consumedEnergyThisMonth, prometheus.GaugeValue, *statistics.ConsumedEnergyThisMonth, labelValues...)
+			}
+			if statistics.ConsumedEnergyThisYear != nil {
+				ch <- prometheus.MustNewConstMetric(c.consumedEnergyThisYear, prometheus.GaugeValue, *statistics.ConsumedEnergyThisYear, labelValues...)
+			}
+			if statistics.TotalConsumedEnergy != nil {
+				ch <- prometheus.MustNewConstMetric(c.totalConsumedEnergy, prometheus.GaugeValue, *statistics.TotalConsumedEnergy, labelValues...)
+			}
+			if statistics.GeneratedEnergyToday != nil {
+				ch <- prometheus.MustNewConstMetric(c.generatedEnergyToday, prometheus.GaugeValue, *statistics.GeneratedEnergyToday, labelValues...)
+			}
+			if statistics.GeneratedEnergyThisMonth != nil {
+				ch <- prometheus.MustNewConstMetric(c.generatedEnergyThisMonth, prometheus.GaugeValue, *statistics.GeneratedEnergyThisMonth, labelValues...)
+			}
+			if statistics.GeneratedEnergyThisYear != nil {
+				ch <- prometheus.MustNewConstMetric(c.generatedEnergyThisYear, prometheus.GaugeValue, *statistics.GeneratedEnergyThisYear, labelValues...)
+			}
+			if statistics.TotalGeneratedEnergy != nil {
+				ch <- prometheus.MustNewConstMetric(c.totalGeneratedEnergy, prometheus.GaugeValue, *statistics.TotalGeneratedEnergy, labelValues...)
+			}
 		}()
 	}
 }

@@ -6,9 +6,11 @@ import (
 )
 
 type RealTimeStatus struct {
-	BatteryStatus              BatteryStatus
-	ChargingEquipmentStatus    ChargingEquipmentStatus
-	DischargingEquipmentStatus DischargingEquipmentStatus
+	OverTemperatureInsideTheDevice *bool
+	Night                          *bool
+	BatteryStatus                  *BatteryStatusDetails
+	ChargingEquipmentStatus        *ChargingEquipmentStatusDetails
+	DischargingEquipmentStatus     *DischargingEquipmentStatusDetails
 }
 
 // ----
@@ -16,18 +18,20 @@ type RealTimeStatus struct {
 type BatteryStatus uint16
 
 type BatteryStatusDetails struct {
+	Raw                                uint16
 	VoltageStatus                      VoltageStatus
 	TemperatureStatus                  TemperatureStatus
 	BatteryInternalResistanceAbnormal  bool
 	WrongIdentificationForRatedVoltage bool
 }
 
-func (bs BatteryStatus) Details() BatteryStatusDetails {
+func (v BatteryStatus) Details() BatteryStatusDetails {
 	return BatteryStatusDetails{
-		VoltageStatus:                      VoltageStatus(getBits(uint16(bs), 0, 0x0f)),
-		TemperatureStatus:                  TemperatureStatus(getBits(uint16(bs), 8, 0x0f)),
-		BatteryInternalResistanceAbnormal:  checkBit(uint16(bs), 8),
-		WrongIdentificationForRatedVoltage: checkBit(uint16(bs), 15),
+		Raw:                                uint16(v),
+		VoltageStatus:                      VoltageStatus(getBits(uint16(v), 0, 0x0f)),
+		TemperatureStatus:                  TemperatureStatus(getBits(uint16(v), 8, 0x0f)),
+		BatteryInternalResistanceAbnormal:  checkBit(uint16(v), 8),
+		WrongIdentificationForRatedVoltage: checkBit(uint16(v), 15),
 	}
 }
 
@@ -43,8 +47,8 @@ const (
 	VoltageStatusFault
 )
 
-func (vs VoltageStatus) String() string {
-	switch vs {
+func (v VoltageStatus) String() string {
+	switch v {
 	case VoltageStatusNormal:
 		return "Normal"
 	case VoltageStatusOverVoltage:
@@ -56,12 +60,12 @@ func (vs VoltageStatus) String() string {
 	case VoltageStatusFault:
 		return "Fault"
 	default:
-		return fmt.Sprintf("%02x", uint8(vs))
+		return fmt.Sprintf("0x%02x", uint8(v))
 	}
 }
 
-func (vs VoltageStatus) MarshalJSON() ([]byte, error) {
-	return json.Marshal(vs.String())
+func (v VoltageStatus) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.String())
 }
 
 // ----
@@ -74,8 +78,8 @@ const (
 	TemperatureStatusLowTemp
 )
 
-func (ts TemperatureStatus) String() string {
-	switch ts {
+func (v TemperatureStatus) String() string {
+	switch v {
 	case TemperatureStatusNormal:
 		return "Normal"
 	case TemperatureStatusOverTemp:
@@ -83,12 +87,12 @@ func (ts TemperatureStatus) String() string {
 	case TemperatureStatusLowTemp:
 		return "Low Temp"
 	default:
-		return fmt.Sprintf("%02x", uint8(ts))
+		return fmt.Sprintf("0x%02x", uint8(v))
 	}
 }
 
-func (ts TemperatureStatus) MarshalJSON() ([]byte, error) {
-	return json.Marshal(ts.String())
+func (v TemperatureStatus) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.String())
 }
 
 // ----
@@ -96,6 +100,7 @@ func (ts TemperatureStatus) MarshalJSON() ([]byte, error) {
 type ChargingEquipmentStatus uint16
 
 type ChargingEquipmentStatusDetails struct {
+	Raw                                uint16
 	Running                            bool
 	Fault                              bool
 	ChargingStatus                     ChargingStatus
@@ -110,20 +115,21 @@ type ChargingEquipmentStatusDetails struct {
 	InputVoltageStatus                 InputVoltageStatus
 }
 
-func (ces ChargingEquipmentStatus) Details() ChargingEquipmentStatusDetails {
+func (v ChargingEquipmentStatus) Details() ChargingEquipmentStatusDetails {
 	return ChargingEquipmentStatusDetails{
-		Running:                            checkBit(uint16(ces), 0),
-		Fault:                              checkBit(uint16(ces), 1),
-		ChargingStatus:                     ChargingStatus(getBits(uint16(ces), 2, 0x03)),
-		PVInputIsShort:                     checkBit(uint16(ces), 4),
-		LoadMOSFETIsShort:                  checkBit(uint16(ces), 7),
-		LoadIsShort:                        checkBit(uint16(ces), 8),
-		LoadIsOverCurrent:                  checkBit(uint16(ces), 9),
-		InputIsOverCurrent:                 checkBit(uint16(ces), 10),
-		AntiReverseMOSFETIsShort:           checkBit(uint16(ces), 11),
-		ChargingOrAntiReverseMOSFETIsShort: checkBit(uint16(ces), 12),
-		ChargingMOSFETIsShort:              checkBit(uint16(ces), 13),
-		InputVoltageStatus:                 InputVoltageStatus(getBits(uint16(ces), 14, 0x03)),
+		Raw:                                uint16(v),
+		Running:                            checkBit(uint16(v), 0),
+		Fault:                              checkBit(uint16(v), 1),
+		ChargingStatus:                     ChargingStatus(getBits(uint16(v), 2, 0x03)),
+		PVInputIsShort:                     checkBit(uint16(v), 4),
+		LoadMOSFETIsShort:                  checkBit(uint16(v), 7),
+		LoadIsShort:                        checkBit(uint16(v), 8),
+		LoadIsOverCurrent:                  checkBit(uint16(v), 9),
+		InputIsOverCurrent:                 checkBit(uint16(v), 10),
+		AntiReverseMOSFETIsShort:           checkBit(uint16(v), 11),
+		ChargingOrAntiReverseMOSFETIsShort: checkBit(uint16(v), 12),
+		ChargingMOSFETIsShort:              checkBit(uint16(v), 13),
+		InputVoltageStatus:                 InputVoltageStatus(getBits(uint16(v), 14, 0x03)),
 	}
 }
 
@@ -138,8 +144,8 @@ const (
 	ChargingStatusEqualization
 )
 
-func (cs ChargingStatus) String() string {
-	switch cs {
+func (v ChargingStatus) String() string {
+	switch v {
 	case ChargingStatusNoCharging:
 		return "No Charging"
 	case ChargingStatusFloat:
@@ -149,12 +155,12 @@ func (cs ChargingStatus) String() string {
 	case ChargingStatusEqualization:
 		return "Equalization"
 	default:
-		return fmt.Sprintf("%02x", uint8(cs))
+		return fmt.Sprintf("0x%02x", uint8(v))
 	}
 }
 
-func (cs ChargingStatus) MarshalJSON() ([]byte, error) {
-	return json.Marshal(cs.String())
+func (v ChargingStatus) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.String())
 }
 
 // ----
@@ -168,8 +174,8 @@ const (
 	InputVoltageStatusInputVoltageError
 )
 
-func (ivs InputVoltageStatus) String() string {
-	switch ivs {
+func (v InputVoltageStatus) String() string {
+	switch v {
 	case InputVoltageStatusNormal:
 		return "Normal"
 	case InputVoltageStatusNoInputPowerConnected:
@@ -179,12 +185,12 @@ func (ivs InputVoltageStatus) String() string {
 	case InputVoltageStatusInputVoltageError:
 		return "Input Voltage Error"
 	default:
-		return fmt.Sprintf("%02x", uint8(ivs))
+		return fmt.Sprintf("0x%02x", uint8(v))
 	}
 }
 
-func (ivs InputVoltageStatus) MarshalJSON() ([]byte, error) {
-	return json.Marshal(ivs.String())
+func (v InputVoltageStatus) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.String())
 }
 
 // ----
@@ -192,6 +198,7 @@ func (ivs InputVoltageStatus) MarshalJSON() ([]byte, error) {
 type DischargingEquipmentStatus uint16
 
 type DischargingEquipmentStatusDetails struct {
+	Raw                           uint16
 	Running                       bool
 	Fault                         bool
 	OutputOverVoltage             bool
@@ -206,20 +213,21 @@ type DischargingEquipmentStatusDetails struct {
 	InputVoltageStatus            DischargingEquipmentInputVoltageStatus
 }
 
-func (des DischargingEquipmentStatus) Details() DischargingEquipmentStatusDetails {
+func (v DischargingEquipmentStatus) Details() DischargingEquipmentStatusDetails {
 	return DischargingEquipmentStatusDetails{
-		Running:                       checkBit(uint16(des), 0),
-		Fault:                         checkBit(uint16(des), 1),
-		OutputOverVoltage:             checkBit(uint16(des), 4),
-		BoostOverVoltage:              checkBit(uint16(des), 5),
-		ShortCircuitInHighVoltageSide: checkBit(uint16(des), 6),
-		InputOverVoltage:              checkBit(uint16(des), 7),
-		OutputVoltageAbnormal:         checkBit(uint16(des), 8),
-		UnableToStopDischarging:       checkBit(uint16(des), 9),
-		UnableToDischarge:             checkBit(uint16(des), 10),
-		ShortCircuit:                  checkBit(uint16(des), 11),
-		OutputPowerStatus:             OutputPowerStatus(getBits(uint16(des), 12, 0x03)),
-		InputVoltageStatus:            DischargingEquipmentInputVoltageStatus(getBits(uint16(des), 14, 0x03)),
+		Raw:                           uint16(v),
+		Running:                       checkBit(uint16(v), 0),
+		Fault:                         checkBit(uint16(v), 1),
+		OutputOverVoltage:             checkBit(uint16(v), 4),
+		BoostOverVoltage:              checkBit(uint16(v), 5),
+		ShortCircuitInHighVoltageSide: checkBit(uint16(v), 6),
+		InputOverVoltage:              checkBit(uint16(v), 7),
+		OutputVoltageAbnormal:         checkBit(uint16(v), 8),
+		UnableToStopDischarging:       checkBit(uint16(v), 9),
+		UnableToDischarge:             checkBit(uint16(v), 10),
+		ShortCircuit:                  checkBit(uint16(v), 11),
+		OutputPowerStatus:             OutputPowerStatus(getBits(uint16(v), 12, 0x03)),
+		InputVoltageStatus:            DischargingEquipmentInputVoltageStatus(getBits(uint16(v), 14, 0x03)),
 	}
 }
 
@@ -234,8 +242,8 @@ const (
 	OutputPowerStatusOverload
 )
 
-func (ops OutputPowerStatus) String() string {
-	switch ops {
+func (v OutputPowerStatus) String() string {
+	switch v {
 	case OutputPowerStatusLightLoad:
 		return "Light Load"
 	case OutputPowerStatusModerateLoad:
@@ -245,12 +253,12 @@ func (ops OutputPowerStatus) String() string {
 	case OutputPowerStatusOverload:
 		return "Overload"
 	default:
-		return fmt.Sprintf("%02x", uint8(ops))
+		return fmt.Sprintf("0x%02x", uint8(v))
 	}
 }
 
-func (ops OutputPowerStatus) MarshalJSON() ([]byte, error) {
-	return json.Marshal(ops.String())
+func (v OutputPowerStatus) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.String())
 }
 
 // ----
@@ -264,8 +272,8 @@ const (
 	DischargingEquipmentInputVoltageStatusNoAccess
 )
 
-func (deivs DischargingEquipmentInputVoltageStatus) String() string {
-	switch deivs {
+func (v DischargingEquipmentInputVoltageStatus) String() string {
+	switch v {
 	case DischargingEquipmentInputVoltageStatusNormal:
 		return "Normal"
 	case DischargingEquipmentInputVoltageStatusInputVoltageLow:
@@ -275,10 +283,10 @@ func (deivs DischargingEquipmentInputVoltageStatus) String() string {
 	case DischargingEquipmentInputVoltageStatusNoAccess:
 		return "No Access"
 	default:
-		return fmt.Sprintf("%02x", uint8(deivs))
+		return fmt.Sprintf("0x%02x", uint8(v))
 	}
 }
 
-func (deivs DischargingEquipmentInputVoltageStatus) MarshalJSON() ([]byte, error) {
-	return json.Marshal(deivs.String())
+func (v DischargingEquipmentInputVoltageStatus) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.String())
 }
