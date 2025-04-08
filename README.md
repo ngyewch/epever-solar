@@ -1,3 +1,5 @@
-# epsolar
+# epever-solar
 
-EPsolar driver.
+EPEVER solar charge controller driver.
+
+Supports XTRA, TRIRON, TracerAN series controllers.

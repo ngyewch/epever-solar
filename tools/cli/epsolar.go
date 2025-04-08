@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/ngyewch/epsolar"
+	"github.com/ngyewch/epever/solar"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
 	"github.com/simonvetter/modbus"
