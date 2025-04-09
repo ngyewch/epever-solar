@@ -38,7 +38,7 @@ var (
 		Commands: []*cli.Command{
 			{
 				Name:   "rated-data",
-				Usage:  "rated data",
+				Usage:  "rated-data",
 				Action: doEpsolarRatedData,
 			},
 			{
@@ -55,6 +55,16 @@ var (
 				Name:   "statistics",
 				Usage:  "statistics",
 				Action: doEpsolarStatistics,
+			},
+			{
+				Name:   "parameters",
+				Usage:  "parameters",
+				Action: doEpsolarParameters,
+			},
+			{
+				Name:   "prometheus",
+				Usage:  "prometheus",
+				Action: doEpsolarPrometheus,
 			},
 		},
 	}

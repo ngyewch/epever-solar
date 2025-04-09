@@ -1,12 +1,14 @@
 package epsolar
 
 type RatedData struct {
-	ChargingEquipmentRatedInputVoltage  float64 // V
-	ChargingEquipmentRatedInputCurrent  float64 // A
-	ChargingEquipmentRatedInputPower    float64 // W
-	ChargingEquipmentRatedOutputVoltage float64 // V
-	ChargingEquipmentRatedOutputCurrent float64 // A
-	ChargingEquipmentRatedOutputPower   float64 // W
-	ChargingMode                        uint16
-	RatedOutputCurrentOfLoad            float64 // A
+	ArrayRatedVoltage       *float64 // V
+	ArrayRatedCurrent       *float64 // A
+	ArrayRatedPower         *float64 // W
+	BatteryRatedVoltage     *float64 // V
+	BatteryRatedCurrent     *float64 // A
+	BatteryRatedPower       *float64 // W
+	LoadRatedVoltage        *float64 // V
+	LoadRatedCurrent        *float64 // A
+	LoadRatedPower          *float64 // W
+	BatteryRealRatedVoltage *float64 // V
 }
