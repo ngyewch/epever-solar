@@ -1,4 +1,4 @@
-module github.com/ngyewch/epever/solar
+module github.com/ngyewch/epever-solar
 
 go 1.22
 
