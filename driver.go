@@ -44,43 +44,43 @@ func (dev *Dev) ReadRatedData() (RatedData, error) {
 
 	var r RatedData
 
-	r.ArrayRatedVoltage, err = dev.readInputRegister16AsFloat64(0x3000, 100)
+	r.ArrayRatedVoltage, err = dev.readInputRegisterFromUint16ToFloat64(0x3000, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
-	r.ArrayRatedCurrent, err = dev.readInputRegister16AsFloat64(0x3001, 100)
+	r.ArrayRatedCurrent, err = dev.readInputRegisterFromUint16ToFloat64(0x3001, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
-	r.ArrayRatedPower, err = dev.readInputRegister32AsFloat64(0x3002, 100)
+	r.ArrayRatedPower, err = dev.readInputRegisterFromUint32ToFloat64(0x3002, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
-	r.BatteryRatedVoltage, err = dev.readInputRegister16AsFloat64(0x3004, 100)
+	r.BatteryRatedVoltage, err = dev.readInputRegisterFromUint16ToFloat64(0x3004, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
-	r.BatteryRatedCurrent, err = dev.readInputRegister16AsFloat64(0x3005, 100)
+	r.BatteryRatedCurrent, err = dev.readInputRegisterFromUint16ToFloat64(0x3005, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
-	r.BatteryRatedPower, err = dev.readInputRegister32AsFloat64(0x3006, 100)
+	r.BatteryRatedPower, err = dev.readInputRegisterFromUint32ToFloat64(0x3006, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
-	r.LoadRatedVoltage, err = dev.readInputRegister16AsFloat64(0x300d, 100)
+	r.LoadRatedVoltage, err = dev.readInputRegisterFromUint16ToFloat64(0x300d, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
-	r.LoadRatedCurrent, err = dev.readInputRegister16AsFloat64(0x300e, 100)
+	r.LoadRatedCurrent, err = dev.readInputRegisterFromUint16ToFloat64(0x300e, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
-	r.LoadRatedPower, err = dev.readInputRegister32AsFloat64(0x300f, 100)
+	r.LoadRatedPower, err = dev.readInputRegisterFromUint32ToFloat64(0x300f, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
-	r.BatteryRealRatedVoltage, err = dev.readInputRegister16AsFloat64(0x311d, 100)
+	r.BatteryRealRatedVoltage, err = dev.readInputRegisterFromUint16ToFloat64(0x311d, 100)
 	if err != nil {
 		return RatedData{}, err
 	}
@@ -110,59 +110,59 @@ func (dev *Dev) ReadParameters() (Parameters, error) {
 			r.BatteryType = &v2
 		}
 	}
-	r.BatteryCapacity, err = dev.readHoldingRegister16AsFloat64(0x9001, 1)
+	r.BatteryCapacity, err = dev.readHoldingRegisterFromUint16ToFloat64(0x9001, 1)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.TemperatureCompensationCoefficient, err = dev.readHoldingRegister16AsFloat64(0x9002, 100)
+	r.TemperatureCompensationCoefficient, err = dev.readHoldingRegisterFromUint16ToFloat64(0x9002, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.OverVoltageDisconnectVoltage, err = dev.readHoldingRegister16AsFloat64(0x9003, 100)
+	r.OverVoltageDisconnectVoltage, err = dev.readHoldingRegisterFromUint16ToFloat64(0x9003, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.ChargingLimitVoltage, err = dev.readHoldingRegister16AsFloat64(0x9004, 100)
+	r.ChargingLimitVoltage, err = dev.readHoldingRegisterFromUint16ToFloat64(0x9004, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.OverVoltageReconnectVoltage, err = dev.readHoldingRegister16AsFloat64(0x9005, 100)
+	r.OverVoltageReconnectVoltage, err = dev.readHoldingRegisterFromUint16ToFloat64(0x9005, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.EqualizeChargingVoltage, err = dev.readHoldingRegister16AsFloat64(0x9006, 100)
+	r.EqualizeChargingVoltage, err = dev.readHoldingRegisterFromUint16ToFloat64(0x9006, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.BoostChargingVoltage, err = dev.readHoldingRegister16AsFloat64(0x9007, 100)
+	r.BoostChargingVoltage, err = dev.readHoldingRegisterFromUint16ToFloat64(0x9007, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.FloatChargingVoltage, err = dev.readHoldingRegister16AsFloat64(0x9008, 100)
+	r.FloatChargingVoltage, err = dev.readHoldingRegisterFromUint16ToFloat64(0x9008, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.BoostReconnectChargingVoltage, err = dev.readHoldingRegister16AsFloat64(0x9009, 100)
+	r.BoostReconnectChargingVoltage, err = dev.readHoldingRegisterFromUint16ToFloat64(0x9009, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.LowVoltageReconnectVoltage, err = dev.readHoldingRegister16AsFloat64(0x900a, 100)
+	r.LowVoltageReconnectVoltage, err = dev.readHoldingRegisterFromUint16ToFloat64(0x900a, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.UnderVoltageWarningRecoverVoltage, err = dev.readHoldingRegister16AsFloat64(0x900b, 100)
+	r.UnderVoltageWarningRecoverVoltage, err = dev.readHoldingRegisterFromUint16ToFloat64(0x900b, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.UnderVoltageWarningVoltage, err = dev.readHoldingRegister16AsFloat64(0x900c, 100)
+	r.UnderVoltageWarningVoltage, err = dev.readHoldingRegisterFromUint16ToFloat64(0x900c, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.LowVoltageDisconnectVoltage, err = dev.readHoldingRegister16AsFloat64(0x900d, 100)
+	r.LowVoltageDisconnectVoltage, err = dev.readHoldingRegisterFromUint16ToFloat64(0x900d, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.DischargingLimitVoltage, err = dev.readHoldingRegister16AsFloat64(0x900e, 100)
+	r.DischargingLimitVoltage, err = dev.readHoldingRegisterFromUint16ToFloat64(0x900e, 100)
 	if err != nil {
 		return Parameters{}, err
 	}
@@ -177,23 +177,23 @@ func (dev *Dev) ReadParameters() (Parameters, error) {
 			r.BatteryRatedVoltageLevel = &v2
 		}
 	}
-	r.DefaultLoadOnOffInManualMode, err = dev.readHoldingRegister16(0x906a)
+	r.DefaultLoadOnOffInManualMode, err = dev.readHoldingRegister(0x906a)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.EqualizeDuration, err = dev.readHoldingRegister16(0x906b)
+	r.EqualizeDuration, err = dev.readHoldingRegister(0x906b)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.BoostDuration, err = dev.readHoldingRegister16(0x906c)
+	r.BoostDuration, err = dev.readHoldingRegister(0x906c)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.BatteryDischarge, err = dev.readHoldingRegister16AsFloat64(0x906d, 100) // NOTE: possibly incorrect documentation (divisor)
+	r.BatteryDischarge, err = dev.readHoldingRegisterFromUint16ToFloat64(0x906d, 100) // NOTE: possibly incorrect documentation (divisor)
 	if err != nil {
 		return Parameters{}, err
 	}
-	r.BatteryCharge, err = dev.readHoldingRegister16AsFloat64(0x906e, 100) // NOTE: possibly incorrect documentation (divisor)
+	r.BatteryCharge, err = dev.readHoldingRegisterFromUint16ToFloat64(0x906e, 100) // NOTE: possibly incorrect documentation (divisor)
 	if err != nil {
 		return Parameters{}, err
 	}
@@ -235,47 +235,47 @@ func (dev *Dev) ReadRealTimeData() (RealTimeData, error) {
 
 	var r RealTimeData
 
-	r.PVArrayInputVoltage, err = dev.readInputRegister16AsFloat64(0x3100, 100)
+	r.PVArrayInputVoltage, err = dev.readInputRegisterFromUint16ToFloat64(0x3100, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	r.PVArrayInputCurrent, err = dev.readInputRegister16AsFloat64(0x3101, 100)
+	r.PVArrayInputCurrent, err = dev.readInputRegisterFromUint16ToFloat64(0x3101, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	r.PVArrayInputPower, err = dev.readInputRegister32AsFloat64(0x3102, 100)
+	r.PVArrayInputPower, err = dev.readInputRegisterFromUint32ToFloat64(0x3102, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	r.LoadVoltage, err = dev.readInputRegister16AsFloat64(0x310c, 100)
+	r.LoadVoltage, err = dev.readInputRegisterFromUint16ToFloat64(0x310c, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	r.LoadCurrent, err = dev.readInputRegister16AsFloat64(0x310d, 100)
+	r.LoadCurrent, err = dev.readInputRegisterFromUint16ToFloat64(0x310d, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	r.LoadPower, err = dev.readInputRegister32AsFloat64(0x310e, 100)
+	r.LoadPower, err = dev.readInputRegisterFromUint32ToFloat64(0x310e, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	r.BatteryTemperature, err = dev.readInputRegister16AsFloat64(0x3110, 100)
+	r.BatteryTemperature, err = dev.readInputRegisterFromUint16ToFloat64(0x3110, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	r.DeviceTemperature, err = dev.readInputRegister16AsFloat64(0x3111, 100)
+	r.DeviceTemperature, err = dev.readInputRegisterFromUint16ToFloat64(0x3111, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	r.BatterySOC, err = dev.readInputRegister16AsFloat64(0x311a, 1)
+	r.BatterySOC, err = dev.readInputRegisterFromUint16ToFloat64(0x311a, 1)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	r.BatteryVoltage, err = dev.readInputRegister16AsFloat64(0x331a, 100)
+	r.BatteryVoltage, err = dev.readInputRegisterFromUint16ToFloat64(0x331a, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
-	r.BatteryCurrent, err = dev.readInputRegister32AsFloat64(0x331b, 100)
+	r.BatteryCurrent, err = dev.readInputRegisterFromUint32ToFloat64(0x331b, 100)
 	if err != nil {
 		return RealTimeData{}, err
 	}
@@ -353,51 +353,51 @@ func (dev *Dev) ReadStatistics() (Statistics, error) {
 
 	var r Statistics
 
-	r.MaximumArrayVoltageToday, err = dev.readInputRegister16AsFloat64(0x3300, 100) // undocumented
+	r.MaximumArrayVoltageToday, err = dev.readInputRegisterFromUint16ToFloat64(0x3300, 100) // undocumented
 	if err != nil {
 		return Statistics{}, err
 	}
-	r.MinimumArrayVoltageToday, err = dev.readInputRegister16AsFloat64(0x3301, 100) // undocumented
+	r.MinimumArrayVoltageToday, err = dev.readInputRegisterFromUint16ToFloat64(0x3301, 100) // undocumented
 	if err != nil {
 		return Statistics{}, err
 	}
-	r.MaximumBatteryVoltageToday, err = dev.readInputRegister16AsFloat64(0x3302, 100)
+	r.MaximumBatteryVoltageToday, err = dev.readInputRegisterFromUint16ToFloat64(0x3302, 100)
 	if err != nil {
 		return Statistics{}, err
 	}
-	r.MinimumBatteryVoltageToday, err = dev.readInputRegister16AsFloat64(0x3303, 100)
+	r.MinimumBatteryVoltageToday, err = dev.readInputRegisterFromUint16ToFloat64(0x3303, 100)
 	if err != nil {
 		return Statistics{}, err
 	}
-	r.ConsumedEnergyToday, err = dev.readInputRegister32AsFloat64(0x3304, 100)
+	r.ConsumedEnergyToday, err = dev.readInputRegisterFromUint32ToFloat64(0x3304, 100)
 	if err != nil {
 		return Statistics{}, err
 	}
-	r.ConsumedEnergyThisMonth, err = dev.readInputRegister32AsFloat64(0x3306, 100)
+	r.ConsumedEnergyThisMonth, err = dev.readInputRegisterFromUint32ToFloat64(0x3306, 100)
 	if err != nil {
 		return Statistics{}, err
 	}
-	r.ConsumedEnergyThisYear, err = dev.readInputRegister32AsFloat64(0x3308, 100)
+	r.ConsumedEnergyThisYear, err = dev.readInputRegisterFromUint32ToFloat64(0x3308, 100)
 	if err != nil {
 		return Statistics{}, err
 	}
-	r.TotalConsumedEnergy, err = dev.readInputRegister32AsFloat64(0x330a, 100)
+	r.TotalConsumedEnergy, err = dev.readInputRegisterFromUint32ToFloat64(0x330a, 100)
 	if err != nil {
 		return Statistics{}, err
 	}
-	r.GeneratedEnergyToday, err = dev.readInputRegister32AsFloat64(0x330c, 100)
+	r.GeneratedEnergyToday, err = dev.readInputRegisterFromUint32ToFloat64(0x330c, 100)
 	if err != nil {
 		return Statistics{}, err
 	}
-	r.GeneratedEnergyThisMonth, err = dev.readInputRegister32AsFloat64(0x330e, 100)
+	r.GeneratedEnergyThisMonth, err = dev.readInputRegisterFromUint32ToFloat64(0x330e, 100)
 	if err != nil {
 		return Statistics{}, err
 	}
-	r.GeneratedEnergyThisYear, err = dev.readInputRegister32AsFloat64(0x3310, 100)
+	r.GeneratedEnergyThisYear, err = dev.readInputRegisterFromUint32ToFloat64(0x3310, 100)
 	if err != nil {
 		return Statistics{}, err
 	}
-	r.TotalGeneratedEnergy, err = dev.readInputRegister32AsFloat64(0x3312, 100)
+	r.TotalGeneratedEnergy, err = dev.readInputRegisterFromUint32ToFloat64(0x3312, 100)
 	if err != nil {
 		return Statistics{}, err
 	}
@@ -405,7 +405,7 @@ func (dev *Dev) ReadStatistics() (Statistics, error) {
 	return r, nil
 }
 
-func (dev *Dev) readInputRegister16AsFloat64(addr uint16, divisor float64) (*float64, error) {
+func (dev *Dev) readInputRegisterFromUint16ToFloat64(addr uint16, divisor float64) (*float64, error) {
 	v, err := dev.mc.ReadRegister(addr, modbus.INPUT_REGISTER)
 	if err != nil {
 		if errors.Is(err, modbus.ErrIllegalDataAddress) {
@@ -418,7 +418,7 @@ func (dev *Dev) readInputRegister16AsFloat64(addr uint16, divisor float64) (*flo
 	return &f64, nil
 }
 
-func (dev *Dev) readInputRegister32AsFloat64(addr uint16, divisor float64) (*float64, error) {
+func (dev *Dev) readInputRegisterFromUint32ToFloat64(addr uint16, divisor float64) (*float64, error) {
 	v, err := dev.mc.ReadRegisters(addr, 2, modbus.INPUT_REGISTER)
 	if err != nil {
 		if errors.Is(err, modbus.ErrIllegalDataAddress) {
@@ -434,7 +434,7 @@ func (dev *Dev) readInputRegister32AsFloat64(addr uint16, divisor float64) (*flo
 	return &f64, nil
 }
 
-func (dev *Dev) readHoldingRegister16(addr uint16) (*uint16, error) {
+func (dev *Dev) readHoldingRegister(addr uint16) (*uint16, error) {
 	v, err := dev.mc.ReadRegister(addr, modbus.HOLDING_REGISTER)
 	if err != nil {
 		if errors.Is(err, modbus.ErrIllegalDataAddress) {
@@ -446,7 +446,7 @@ func (dev *Dev) readHoldingRegister16(addr uint16) (*uint16, error) {
 	return &v, nil
 }
 
-func (dev *Dev) readHoldingRegister16AsFloat64(addr uint16, divisor float64) (*float64, error) {
+func (dev *Dev) readHoldingRegisterFromUint16ToFloat64(addr uint16, divisor float64) (*float64, error) {
 	v, err := dev.mc.ReadRegister(addr, modbus.HOLDING_REGISTER)
 	if err != nil {
 		if errors.Is(err, modbus.ErrIllegalDataAddress) {
