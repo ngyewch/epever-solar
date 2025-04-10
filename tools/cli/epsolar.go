@@ -4,28 +4,18 @@ import (
 	"github.com/ngyewch/epever-solar"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
-	"github.com/simonvetter/modbus"
 	"github.com/urfave/cli/v2"
 	"os"
 	"sync"
-	"time"
 )
 
 func newEpsolar(cCtx *cli.Context) (*epsolar.Dev, error) {
-	serialPort := serialPortFlag.Get(cCtx)
-	modbusUnitId := modbusUnitIdFlag.Get(cCtx)
-
-	client, err := modbus.NewClient(&modbus.ClientConfiguration{
-		URL:      "rtu://" + serialPort,
-		Speed:    115200,
-		DataBits: 8,
-		Parity:   modbus.PARITY_NONE,
-		StopBits: 1,
-		Timeout:  1 * time.Second,
-	})
+	client, err := newModbusClient(cCtx, nil)
 	if err != nil {
 		return nil, err
 	}
+
+	modbusUnitId := modbusUnitIdFlag.Get(cCtx)
 
 	err = client.Open()
 	if err != nil {

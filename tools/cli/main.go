@@ -14,6 +14,39 @@ var (
 		Usage:    "serial port",
 		Required: true,
 		EnvVars:  []string{"SERIAL_PORT"},
+		Category: "Serial",
+	}
+	baudRateFlag = &cli.UintFlag{
+		Name:     "baud-rate",
+		Usage:    "baud rate",
+		Value:    115200,
+		EnvVars:  []string{"BAUD_RATE"},
+		Category: "Serial",
+	}
+	dataBitsFlag = &cli.UintFlag{
+		Name:     "data-bits",
+		Usage:    "data bits",
+		Value:    8,
+		EnvVars:  []string{"DATA_BITS"},
+		Category: "Serial",
+	}
+	parityFlag = &cli.StringFlag{
+		Name:    "parity",
+		Usage:   "parity",
+		Value:   "N",
+		EnvVars: []string{"PARITY"},
+		Action: func(cCtx *cli.Context, s string) error {
+			_, err := parseParity(s)
+			return err
+		},
+		Category: "Serial",
+	}
+	stopBitsFlag = &cli.UintFlag{
+		Name:     "stop-bits",
+		Usage:    "stop bits",
+		Value:    1,
+		EnvVars:  []string{"STOP_BITS"},
+		Category: "Serial",
 	}
 	modbusUnitIdFlag = &cli.UintFlag{
 		Name:    "modbus-unit-id",
@@ -26,6 +59,7 @@ var (
 			}
 			return nil
 		},
+		Category: "Modbus",
 	}
 
 	app = &cli.App{
@@ -33,6 +67,10 @@ var (
 		Usage: "EPsolar CLI",
 		Flags: []cli.Flag{
 			serialPortFlag,
+			baudRateFlag,
+			dataBitsFlag,
+			parityFlag,
+			stopBitsFlag,
 			modbusUnitIdFlag,
 		},
 		Commands: []*cli.Command{
