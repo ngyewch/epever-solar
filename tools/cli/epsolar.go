@@ -6,36 +6,15 @@ import (
 	"github.com/prometheus/common/expfmt"
 	"github.com/urfave/cli/v2"
 	"os"
-	"sync"
 )
 
-func newEpsolar(cCtx *cli.Context) (*epsolar.Dev, error) {
-	client, err := newModbusClient(cCtx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	modbusUnitId := modbusUnitIdFlag.Get(cCtx)
-
-	err = client.Open()
-	if err != nil {
-		return nil, err
-	}
-
-	var mutex sync.Mutex
-
-	e := epsolar.New(client, uint8(modbusUnitId), &mutex)
-
-	return e, nil
-}
-
 func doEpsolarRatedData(cCtx *cli.Context) error {
-	e, err := newEpsolar(cCtx)
+	dev, err := newDev(cCtx)
 	if err != nil {
 		return err
 	}
 
-	ratedData, err := e.ReadRatedData()
+	ratedData, err := dev.ReadRatedData()
 	if err != nil {
 		return err
 	}
@@ -49,12 +28,12 @@ func doEpsolarRatedData(cCtx *cli.Context) error {
 }
 
 func doEpsolarParameters(cCtx *cli.Context) error {
-	e, err := newEpsolar(cCtx)
+	dev, err := newDev(cCtx)
 	if err != nil {
 		return err
 	}
 
-	parameters, err := e.ReadParameters()
+	parameters, err := dev.ReadParameters()
 	if err != nil {
 		return err
 	}
@@ -68,12 +47,12 @@ func doEpsolarParameters(cCtx *cli.Context) error {
 }
 
 func doEpsolarRealTimeData(cCtx *cli.Context) error {
-	e, err := newEpsolar(cCtx)
+	dev, err := newDev(cCtx)
 	if err != nil {
 		return err
 	}
 
-	realTimeData, err := e.ReadRealTimeData()
+	realTimeData, err := dev.ReadRealTimeData()
 	if err != nil {
 		return err
 	}
@@ -87,12 +66,12 @@ func doEpsolarRealTimeData(cCtx *cli.Context) error {
 }
 
 func doEpsolarRealTimeStatus(cCtx *cli.Context) error {
-	e, err := newEpsolar(cCtx)
+	dev, err := newDev(cCtx)
 	if err != nil {
 		return err
 	}
 
-	realTimeStatus, err := e.ReadRealTimeStatus()
+	realTimeStatus, err := dev.ReadRealTimeStatus()
 	if err != nil {
 		return err
 	}
@@ -106,12 +85,12 @@ func doEpsolarRealTimeStatus(cCtx *cli.Context) error {
 }
 
 func doEpsolarStatistics(cCtx *cli.Context) error {
-	e, err := newEpsolar(cCtx)
+	dev, err := newDev(cCtx)
 	if err != nil {
 		return err
 	}
 
-	statistics, err := e.ReadStatistics()
+	statistics, err := dev.ReadStatistics()
 	if err != nil {
 		return err
 	}
@@ -125,7 +104,7 @@ func doEpsolarStatistics(cCtx *cli.Context) error {
 }
 
 func doEpsolarPrometheus(cCtx *cli.Context) error {
-	e, err := newEpsolar(cCtx)
+	dev, err := newDev(cCtx)
 	if err != nil {
 		return err
 	}
@@ -133,7 +112,7 @@ func doEpsolarPrometheus(cCtx *cli.Context) error {
 	reg := prometheus.NewRegistry()
 	collectorHelper := epsolar.NewPrometheusCollectorHelper(nil, nil)
 	c := collector{
-		dev:    e,
+		dev:    dev,
 		helper: collectorHelper,
 	}
 	err = reg.Register(&c)
