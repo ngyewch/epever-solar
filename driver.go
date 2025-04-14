@@ -405,6 +405,32 @@ func (dev *Dev) ReadStatistics() (Statistics, error) {
 	return r, nil
 }
 
+func (dev *Dev) ReadRealTimeClock() (RTCData, error) {
+	dev.mutex.Lock()
+	defer dev.mutex.Unlock()
+
+	err := dev.requestSetup()
+	if err != nil {
+		return RTCData{}, err
+	}
+
+	v, err := dev.mc.ReadRegisters(0x9013, 3, modbus.HOLDING_REGISTER)
+	if err != nil {
+		return RTCData{}, err
+	}
+
+	var r RTCData
+
+	r.Second = uint8(getBits(v[0], 0, 0xff))
+	r.Minute = uint8(getBits(v[0], 8, 0xff))
+	r.Hour = uint8(getBits(v[1], 0, 0xff))
+	r.Day = uint8(getBits(v[1], 8, 0xff))
+	r.Month = uint8(getBits(v[2], 0, 0xff))
+	r.Year = uint8(getBits(v[2], 8, 0xff))
+
+	return r, nil
+}
+
 func (dev *Dev) readInputRegisterFromUint16ToFloat64(addr uint16, divisor float64) (*float64, error) {
 	v, err := dev.mc.ReadRegister(addr, modbus.INPUT_REGISTER)
 	if err != nil {

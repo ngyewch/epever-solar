@@ -100,6 +100,11 @@ var (
 				Action: doEpsolarParameters,
 			},
 			{
+				Name:   "rtc",
+				Usage:  "rtc",
+				Action: doEpsolarRTC,
+			},
+			{
 				Name:   "prometheus",
 				Usage:  "prometheus",
 				Action: doEpsolarPrometheus,

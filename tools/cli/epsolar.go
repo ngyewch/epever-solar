@@ -139,6 +139,25 @@ func doEpsolarPrometheus(cCtx *cli.Context) error {
 	return nil
 }
 
+func doEpsolarRTC(cCtx *cli.Context) error {
+	dev, err := newDev(cCtx)
+	if err != nil {
+		return err
+	}
+
+	rtc, err := dev.ReadRealTimeClock()
+	if err != nil {
+		return err
+	}
+
+	err = dump(rtc)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type collector struct {
 	dev    *epsolar.Dev
 	helper *epsolar.PrometheusCollectorHelper
