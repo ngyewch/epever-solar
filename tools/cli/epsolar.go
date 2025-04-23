@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"github.com/ngyewch/epever-solar"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
 	"github.com/urfave/cli/v2"
 	"os"
+	"time"
 )
 
 func doEpsolarRatedData(cCtx *cli.Context) error {
@@ -139,7 +141,7 @@ func doEpsolarPrometheus(cCtx *cli.Context) error {
 	return nil
 }
 
-func doEpsolarRTC(cCtx *cli.Context) error {
+func doEpsolarRTCGet(cCtx *cli.Context) error {
 	dev, err := newDev(cCtx)
 	if err != nil {
 		return err
@@ -151,6 +153,43 @@ func doEpsolarRTC(cCtx *cli.Context) error {
 	}
 
 	err = dump(rtc)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func doEpsolarRTCSet(cCtx *cli.Context) error {
+	t, err := func() (time.Time, error) {
+		switch cCtx.NArg() {
+		case 0:
+			return time.Now(), nil
+		case 1:
+			return time.Parse(time.DateTime, cCtx.Args().Get(0))
+		default:
+			return time.Time{}, fmt.Errorf("too many arguments")
+		}
+	}()
+	if err != nil {
+		return err
+	}
+
+	rtcData := epsolar.RTCData{
+		Year:   uint8(t.Year() % 100),
+		Month:  uint8(t.Month()),
+		Day:    uint8(t.Day()),
+		Hour:   uint8(t.Hour()),
+		Minute: uint8(t.Minute()),
+		Second: uint8(t.Second()),
+	}
+
+	dev, err := newDev(cCtx)
+	if err != nil {
+		return err
+	}
+
+	err = dev.SetRealTimeClock(rtcData)
 	if err != nil {
 		return err
 	}

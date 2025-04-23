@@ -100,9 +100,21 @@ var (
 				Action: doEpsolarParameters,
 			},
 			{
-				Name:   "rtc",
-				Usage:  "rtc",
-				Action: doEpsolarRTC,
+				Name:  "rtc",
+				Usage: "rtc",
+				Subcommands: []*cli.Command{
+					{
+						Name:   "get",
+						Usage:  "get",
+						Action: doEpsolarRTCGet,
+					},
+					{
+						Name:      "set",
+						Usage:     "set",
+						ArgsUsage: "[(date time)]",
+						Action:    doEpsolarRTCSet,
+					},
+				},
 			},
 			{
 				Name:   "prometheus",

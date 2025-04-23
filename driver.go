@@ -431,6 +431,23 @@ func (dev *Dev) ReadRealTimeClock() (RTCData, error) {
 	return r, nil
 }
 
+func (dev *Dev) SetRealTimeClock(r RTCData) error {
+	dev.mutex.Lock()
+	defer dev.mutex.Unlock()
+
+	v := make([]uint16, 3)
+	v[0] = binary.BigEndian.Uint16([]byte{r.Minute, r.Second})
+	v[1] = binary.BigEndian.Uint16([]byte{r.Day, r.Hour})
+	v[2] = binary.BigEndian.Uint16([]byte{r.Year, r.Month})
+
+	err := dev.mc.WriteRegisters(0x9013, v)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (dev *Dev) readInputRegisterFromUint16ToFloat64(addr uint16, divisor float64) (*float64, error) {
 	v, err := dev.mc.ReadRegister(addr, modbus.INPUT_REGISTER)
 	if err != nil {
