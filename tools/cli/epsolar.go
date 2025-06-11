@@ -1,17 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/ngyewch/epever-solar"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 	"os"
 	"time"
 )
 
-func doEpsolarRatedData(cCtx *cli.Context) error {
-	dev, err := newDev(cCtx)
+func doEpsolarRatedData(ctx context.Context, cmd *cli.Command) error {
+	dev, err := newDev(cmd)
 	if err != nil {
 		return err
 	}
@@ -29,8 +30,8 @@ func doEpsolarRatedData(cCtx *cli.Context) error {
 	return nil
 }
 
-func doEpsolarParameters(cCtx *cli.Context) error {
-	dev, err := newDev(cCtx)
+func doEpsolarParameters(ctx context.Context, cmd *cli.Command) error {
+	dev, err := newDev(cmd)
 	if err != nil {
 		return err
 	}
@@ -48,8 +49,8 @@ func doEpsolarParameters(cCtx *cli.Context) error {
 	return nil
 }
 
-func doEpsolarRealTimeData(cCtx *cli.Context) error {
-	dev, err := newDev(cCtx)
+func doEpsolarRealTimeData(ctx context.Context, cmd *cli.Command) error {
+	dev, err := newDev(cmd)
 	if err != nil {
 		return err
 	}
@@ -67,8 +68,8 @@ func doEpsolarRealTimeData(cCtx *cli.Context) error {
 	return nil
 }
 
-func doEpsolarRealTimeStatus(cCtx *cli.Context) error {
-	dev, err := newDev(cCtx)
+func doEpsolarRealTimeStatus(ctx context.Context, cmd *cli.Command) error {
+	dev, err := newDev(cmd)
 	if err != nil {
 		return err
 	}
@@ -86,8 +87,8 @@ func doEpsolarRealTimeStatus(cCtx *cli.Context) error {
 	return nil
 }
 
-func doEpsolarStatistics(cCtx *cli.Context) error {
-	dev, err := newDev(cCtx)
+func doEpsolarStatistics(ctx context.Context, cmd *cli.Command) error {
+	dev, err := newDev(cmd)
 	if err != nil {
 		return err
 	}
@@ -105,8 +106,8 @@ func doEpsolarStatistics(cCtx *cli.Context) error {
 	return nil
 }
 
-func doEpsolarPrometheus(cCtx *cli.Context) error {
-	dev, err := newDev(cCtx)
+func doEpsolarPrometheus(ctx context.Context, cmd *cli.Command) error {
+	dev, err := newDev(cmd)
 	if err != nil {
 		return err
 	}
@@ -141,8 +142,8 @@ func doEpsolarPrometheus(cCtx *cli.Context) error {
 	return nil
 }
 
-func doEpsolarRTCGet(cCtx *cli.Context) error {
-	dev, err := newDev(cCtx)
+func doEpsolarRTCGet(ctx context.Context, cmd *cli.Command) error {
+	dev, err := newDev(cmd)
 	if err != nil {
 		return err
 	}
@@ -160,13 +161,13 @@ func doEpsolarRTCGet(cCtx *cli.Context) error {
 	return nil
 }
 
-func doEpsolarRTCSet(cCtx *cli.Context) error {
+func doEpsolarRTCSet(ctx context.Context, cmd *cli.Command) error {
 	t, err := func() (time.Time, error) {
-		switch cCtx.NArg() {
+		switch cmd.NArg() {
 		case 0:
 			return time.Now(), nil
 		case 1:
-			return time.Parse(time.DateTime, cCtx.Args().Get(0))
+			return time.Parse(time.DateTime, cmd.Args().Get(0))
 		default:
 			return time.Time{}, fmt.Errorf("too many arguments")
 		}
@@ -184,7 +185,7 @@ func doEpsolarRTCSet(cCtx *cli.Context) error {
 		Second: uint8(t.Second()),
 	}
 
-	dev, err := newDev(cCtx)
+	dev, err := newDev(cmd)
 	if err != nil {
 		return err
 	}
