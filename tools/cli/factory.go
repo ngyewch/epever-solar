@@ -1,9 +1,10 @@
 package main
 
 import (
+	"sync"
+
 	epsolar "github.com/ngyewch/epever-solar"
 	"github.com/urfave/cli/v3"
-	"sync"
 )
 
 func newDev(cmd *cli.Command) (*epsolar.Dev, error) {

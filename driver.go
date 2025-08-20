@@ -3,8 +3,9 @@ package epsolar
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/simonvetter/modbus"
 	"sync"
+
+	"github.com/simonvetter/modbus"
 )
 
 type Dev struct {

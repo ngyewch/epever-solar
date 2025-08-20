@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/ngyewch/epever-solar"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
 	"github.com/urfave/cli/v3"
-	"os"
-	"time"
 )
 
 func doEpsolarRatedData(ctx context.Context, cmd *cli.Command) error {
