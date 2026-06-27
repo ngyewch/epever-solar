@@ -2,9 +2,8 @@ version: 2
 project_name: epever-solar
 before:
   hooks:
-    - go mod download
-    - go mod tidy
     - go generate ./...
+    - go mod tidy
 builds:
   - id: epever-solar
     main: ./tools/cli
@@ -22,10 +21,12 @@ builds:
       - -s -w
       - -X main.version={{ if index .Env "VERSION" }}{{ .Env.VERSION }}{{ else }}{{ .Version }}{{ end }}
 archives:
-  - formats:
+  - id: epever-solar
+    formats:
       - zip
 nfpms:
-  - maintainer: Nick Ng <ngyewch@gmail.com>
+  - id: epever-solar
+    maintainer: Nick Ng <ngyewch@gmail.com>
     description: EPEVER Solar Charge Controller utility
     formats:
       - deb
